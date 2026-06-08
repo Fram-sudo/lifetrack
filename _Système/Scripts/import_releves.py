@@ -42,7 +42,20 @@ def get_vault_root() -> Path:
     return SCRIPT_DIR.parent.parent
 
 VAULT_ROOT  = get_vault_root()
-TX_DIR      = VAULT_ROOT / "2 - Domaines" / "Personnel" / "Finances" / "Transactions"
+
+def find_tx_dir(vault_root: Path) -> Path:
+    """Detecte automatiquement le dossier Transactions selon la structure du vault.
+    Compatible avec Second Cerveau (Personnel/Finances/) et Lifetrack (Finances/)."""
+    candidates = [
+        vault_root / "2 - Domaines" / "Personnel" / "Finances" / "Transactions",
+        vault_root / "2 - Domaines" / "Finances" / "Transactions",
+    ]
+    for c in candidates:
+        if c.exists():
+            return c
+    return candidates[0]  # Fallback par defaut
+
+TX_DIR = find_tx_dir(VAULT_ROOT)
 
 # ── Import du parser existant ─────────────────────────────────────────────────
 sys.path.insert(0, str(SCRIPT_DIR))
@@ -1957,7 +1970,7 @@ class ImportApp(tk.Tk):
             self._bs = ttk.Style(theme='litera')
 
         self.vault_root = get_vault_root()
-        self.tx_dir     = self.vault_root / "2 - Domaines" / "Personnel" / "Finances" / "Transactions"
+        self.tx_dir = find_tx_dir(self.vault_root)
 
         self.pdf_list:     list[tuple[str, str]] = []
         self.analysis:     dict | None = None
@@ -2117,11 +2130,11 @@ class ImportApp(tk.Tk):
             return
         new_path = Path(new_path)
         # Vérification minimale : le dossier Transactions doit exister
-        new_tx = new_path / "2 - Domaines" / "Personnel" / "Finances" / "Transactions"
+        new_tx = find_tx_dir(new_path)
         if not new_tx.exists():
             if not messagebox.askyesno("Dossier inattendu",
                     f"Le dossier suivant n'existe pas dans le vault sélectionné :\n"
-                    f"  2 - Domaines/Personnel/Finances/Transactions\n\n"
+                    f"  {new_tx}\n\n"
                     "Voulez-vous quand même utiliser ce vault ?"):
                 return
         # Sauvegarder et mettre à jour
@@ -2718,7 +2731,7 @@ def main():
     setup_dpi_awareness()
 
     vault = get_vault_root()
-    tx    = vault / "2 - Domaines" / "Personnel" / "Finances" / "Transactions"
+    tx    = find_tx_dir(vault)
     if not tx.exists():
         root = tk.Tk(); root.withdraw()
         if messagebox.askyesno('Dossier introuvable',
