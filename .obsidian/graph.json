@@ -1,0 +1,28 @@
+{
+  "collapse-filter": false,
+  "search": "",
+  "showTags": false,
+  "showAttachments": false,
+  "hideUnresolved": false,
+  "showOrphans": true,
+  "collapse-color-groups": true,
+  "colorGroups": [
+    { "query": "path:\"_Système\"",                    "color": {"a":1,"rgb":10264752} },
+    { "query": "path:\"0 - Inbox\"",                   "color": {"a":1,"rgb":14650909} },
+    { "query": "path:\"2 - Domaines/Médias\"",         "color": {"a":1,"rgb":8927727}  },
+    { "query": "path:\"2 - Domaines/Commandes\"",      "color": {"a":1,"rgb":16671755} },
+    { "query": "path:\"2 - Domaines/Finances\"",       "color": {"a":1,"rgb":4235307}  }
+  ],
+  "collapse-display": true,
+  "showArrow": false,
+  "textFadeMultiplier": 0,
+  "nodeSizeMultiplier": 1.3,
+  "lineSizeMultiplier": 1,
+  "collapse-forces": true,
+  "centerStrength": 0.518713248970312,
+  "repelStrength": 10,
+  "linkStrength": 1,
+  "linkDistance": 250,
+  "scale": 1,
+  "close": true
+}

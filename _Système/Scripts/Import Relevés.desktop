@@ -1,0 +1,9 @@
+[Desktop Entry]
+Version=1.0
+Type=Application
+Name=Import Relevés Bancaires
+Comment=Importer des relevés PDF SG/Revolut dans Obsidian Finances
+Exec=bash -c "cd '/home/guillaume/Documents/Obsidian/Lifetrack/_Système/Scripts' && python3 import_releves.py"
+Icon=accessories-calculator
+Terminal=false
+Categories=Finance;

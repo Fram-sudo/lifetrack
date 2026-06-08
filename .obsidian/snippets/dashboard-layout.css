@@ -1,0 +1,222 @@
+/* ================================================
+   Second Cerveau — Dashboard Layout
+   Cards, grilles, blocs visuels pour la page HOME
+   S'applique aux notes avec cssclasses: [dashboard]
+   ================================================ */
+
+/* ---- STATS BAR ---- */
+.db-stats-bar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 18px;
+  background: var(--bl-mantle, #F4EFE8);
+  border-radius: 10px;
+  font-size: 0.87em;
+  margin: 12px 0 20px 0;
+  border: 1px solid var(--bl-crust, #EAE4DC);
+  flex-wrap: wrap;
+}
+.db-stat strong {
+  color: var(--bl-accent, #5B7FA6);
+  font-weight: 700;
+  font-size: 1.05em;
+}
+.db-sep {
+  color: var(--bl-surface1, #CCC7BE);
+  font-weight: 300;
+  font-size: 1.1em;
+}
+
+/* ---- HUB GRID (navigation principale) ---- */
+.db-hub-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 10px;
+  margin: 14px 0;
+}
+
+.db-hub-card {
+  padding: 16px 14px 14px 14px;
+  border-radius: 10px;
+  border: 1px solid var(--bl-crust, #EAE4DC);
+  cursor: pointer;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+  user-select: none;
+}
+.db-hub-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 6px 18px rgba(44, 44, 46, 0.10);
+}
+.db-hub-icon {
+  font-size: 1.6em;
+  margin-bottom: 8px;
+  line-height: 1;
+}
+.db-hub-name {
+  font-weight: 700;
+  font-size: 0.92em;
+  color: var(--bl-text, #2C2C2E);
+  margin-bottom: 3px;
+}
+.db-hub-items {
+  font-size: 0.75em;
+  color: var(--bl-subtext0, #7A766E);
+}
+
+/* ---- PROJECTS GRID ---- */
+.db-projects-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 10px;
+  margin: 10px 0;
+}
+.db-project-card {
+  padding: 13px 16px;
+  background: var(--bl-mantle, #F4EFE8);
+  border-radius: 9px;
+  border: 1px solid var(--bl-crust, #EAE4DC);
+  transition: box-shadow 0.12s;
+}
+.db-project-card:hover {
+  box-shadow: 0 3px 10px rgba(44, 44, 46, 0.08);
+}
+.db-project-name {
+  font-weight: 600;
+  font-size: 0.9em;
+  margin-bottom: 7px;
+  color: var(--bl-text, #2C2C2E);
+}
+.db-project-name a {
+  color: var(--bl-accent, #5B7FA6) !important;
+  text-decoration: none !important;
+  border-bottom: none !important;
+}
+.db-project-name a:hover {
+  color: var(--bl-h1, #3D5A80) !important;
+}
+.db-project-meta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.db-badge {
+  padding: 2px 9px;
+  border-radius: 20px;
+  font-size: 0.73em;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+}
+.db-date {
+  font-size: 0.77em;
+  color: var(--bl-subtext0, #7A766E);
+}
+
+/* ---- MEDIA GRID ---- */
+.db-media-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 10px;
+  margin: 10px 0;
+}
+.db-media-card {
+  padding: 12px 16px;
+  background: var(--bl-mantle, #F4EFE8);
+  border-radius: 9px;
+  border: 1px solid var(--bl-crust, #EAE4DC);
+  transition: box-shadow 0.12s;
+}
+.db-media-card:hover {
+  box-shadow: 0 3px 10px rgba(44, 44, 46, 0.08);
+}
+.db-media-type {
+  font-size: 0.7em;
+  font-weight: 800;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  margin-bottom: 5px;
+}
+.db-media-name {
+  font-weight: 600;
+  font-size: 0.9em;
+  color: var(--bl-text, #2C2C2E);
+}
+.db-media-name a {
+  color: var(--bl-text, #2C2C2E) !important;
+  text-decoration: none !important;
+  border-bottom: none !important;
+}
+.db-media-name a:hover {
+  color: var(--bl-accent, #5B7FA6) !important;
+}
+.db-media-note {
+  font-size: 0.82em;
+  margin-top: 5px;
+  letter-spacing: 0.03em;
+}
+
+/* ---- RECENT NOTES ---- */
+.db-recent-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+  margin: 10px 0;
+}
+.db-recent-card {
+  padding: 10px 13px;
+  background: var(--bl-mantle, #F4EFE8);
+  border-radius: 8px;
+  border: 1px solid var(--bl-crust, #EAE4DC);
+  font-size: 0.83em;
+}
+.db-recent-card a {
+  font-weight: 500;
+  color: var(--bl-accent, #5B7FA6) !important;
+  text-decoration: none !important;
+  border-bottom: none !important;
+  display: block;
+  margin-bottom: 3px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.db-recent-meta {
+  color: var(--bl-subtext0, #7A766E);
+  font-size: 0.85em;
+}
+
+/* ---- ÉTAT VIDE ---- */
+.db-empty {
+  color: var(--bl-subtext0, #7A766E);
+  font-size: 0.87em;
+  font-style: italic;
+  padding: 10px 0;
+  text-align: center;
+}
+
+/* ---- SECTION HEADERS dans le dashboard ---- */
+.dashboard .markdown-rendered h2 {
+  font-size: 1.1em !important;
+  font-weight: 700 !important;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  color: var(--bl-subtext1, #5C5852) !important;
+  border-bottom: none !important;
+  margin-top: 24px !important;
+  margin-bottom: 4px !important;
+  padding-bottom: 0 !important;
+}
+
+/* inline-title masqué sur dashboard (le H1 du contenu sert de titre) */
+.dashboard .inline-title {
+  display: none !important;
+}
+
+/* ---- RESPONSIVE : 2 colonnes si fenêtre étroite ---- */
+@media (max-width: 900px) {
+  .db-hub-grid { grid-template-columns: repeat(2, 1fr); }
+  .db-projects-grid { grid-template-columns: 1fr; }
+  .db-media-grid { grid-template-columns: 1fr; }
+  .db-recent-grid { grid-template-columns: repeat(2, 1fr); }
+}

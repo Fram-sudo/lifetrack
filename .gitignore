@@ -1,0 +1,25 @@
+# ── Données personnelles utilisateur ────────────────────────────
+2 - Domaines/Finances/Transactions/
+0 - Inbox/
+
+# ── Configuration personnelle des scripts ───────────────────────
+_Système/Scripts/script_config.json
+_Système/Scripts/bank_configs.json
+
+# ── Cache Python ─────────────────────────────────────────────────
+__pycache__/
+*.pyc
+*.pyo
+
+# ── Obsidian (état spécifique à chaque machine) ──────────────────
+.obsidian/workspace.json
+.obsidian/workspace-mobile.json
+
+# ── Syncthing ────────────────────────────────────────────────────
+.stfolder/
+.stignore
+
+# ── Système ──────────────────────────────────────────────────────
+.DS_Store
+Thumbs.db
+desktop.ini

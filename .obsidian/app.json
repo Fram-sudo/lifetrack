@@ -1,0 +1,26 @@
+{
+  "userIgnoreFilters": [
+    "_Système/Templates"
+  ],
+  "useMarkdownLinks": false,
+  "newLinkFormat": "shortest",
+  "attachmentFolderPath": "_Système/Attachments",
+  "newFileLocation": "folder",
+  "newFileFolderPath": "0 - Inbox",
+  "defaultViewMode": "preview",
+  "livePreview": true,
+  "legacyEditor": false,
+  "showLineNumber": true,
+  "strictLineBreaks": false,
+  "spellcheck": true,
+  "spellcheckLanguages": null,
+  "readableLineLength": true,
+  "showFrontmatter": false,
+  "propertiesInDocument": "hidden",
+  "showInlineTitle": false,
+  "promptDelete": true,
+  "trashOption": "local",
+  "vimMode": false,
+  "tabSize": 2,
+  "showUnsupportedFiles": true
+}

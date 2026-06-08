@@ -1,0 +1,18 @@
+{
+  "theme": "moonstone",
+  "accentColor": "#8839ef",
+  "baseFontSize": 16,
+  "interfaceFontFamily": "",
+  "textFontFamily": "",
+  "monospaceFontFamily": "",
+  "enabledCssSnippets": [
+    "theme",
+    "colored-folders",
+    "custom-icons",
+    "custom-callouts",
+    "dashboard-layout",
+    "media-cards",
+    "typography",
+    "mobile-responsive"
+  ]
+}

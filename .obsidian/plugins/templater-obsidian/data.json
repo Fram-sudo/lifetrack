@@ -1,0 +1,20 @@
+{
+  "enabled_templates_hotkeys": [],
+  "trigger_on_file_creation": true,
+  "auto_jump_to_cursor": false,
+  "enable_system_commands": false,
+  "shell_path": "",
+  "user_script_functions_folder": "",
+  "enable_folder_templates": true,
+  "folder_templates": [
+    { "folder": "2 - Domaines/Médias/Animés",         "path": "_Système/Templates/TPL - Animé"          },
+    { "folder": "2 - Domaines/Médias/Films",           "path": "_Système/Templates/TPL - Film"           },
+    { "folder": "2 - Domaines/Médias/Séries",          "path": "_Système/Templates/TPL - Série"          },
+    { "folder": "2 - Domaines/Médias/Jeux Vidéo",      "path": "_Système/Templates/TPL - Jeu Vidéo"      },
+    { "folder": "2 - Domaines/Médias/Manga & Manwha",  "path": "_Système/Templates/TPL - Manga & Manwha" },
+    { "folder": "2 - Domaines/Médias/Romans & Livres", "path": "_Système/Templates/TPL - Roman & Livre"  },
+    { "folder": "2 - Domaines/Commandes",              "path": "_Système/Templates/TPL - Suivi Commande" }
+  ],
+  "startup_templates": ["_Système/Templates/TPL - Startup"],
+  "template_folder": "_Système/Templates"
+}

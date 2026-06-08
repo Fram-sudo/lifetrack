@@ -1,0 +1,9 @@
+/* ═══════════════════════════════════════════════════
+   CUSTOM ICONS — Lifetrack
+   ═══════════════════════════════════════════════════ */
+.nav-folder-title[data-path="0 - Inbox"] .nav-folder-title-content::before  { content:"📥 "; }
+.nav-folder-title[data-path="2 - Domaines"] .nav-folder-title-content::before { content:"🌐 "; }
+.nav-folder-title[data-path="_Système"] .nav-folder-title-content::before   { content:"⚙️ "; }
+
+.callout[data-callout="ia"]    { --callout-color:139,92,246; --callout-icon:lucide-bot; }
+.callout[data-callout="suivi"] { --callout-color:16,185,129; --callout-icon:lucide-check-circle; }

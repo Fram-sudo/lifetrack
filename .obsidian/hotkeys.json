@@ -1,0 +1,17 @@
+{
+  "app:open-settings": [{"modifiers": ["Ctrl"], "key": ","}],
+  "templater-obsidian:insert-templater": [{"modifiers": ["Ctrl"], "key": "t"}],
+  "quickadd:runQuickAdd": [{"modifiers": ["Ctrl"], "key": "q"}],
+  "app:toggle-left-sidebar": [{"modifiers": ["Ctrl"], "key": "\\"}],
+  "editor:toggle-bold": [{"modifiers": ["Ctrl"], "key": "b"}],
+  "editor:toggle-italics": [{"modifiers": ["Ctrl"], "key": "i"}],
+  "editor:toggle-checklist-status": [{"modifiers": ["Ctrl"], "key": "Enter"}],
+  "app:go-back": [{"modifiers": ["Ctrl", "Alt"], "key": "ArrowLeft"}],
+  "app:go-forward": [{"modifiers": ["Ctrl", "Alt"], "key": "ArrowRight"}],
+  "workspace:split-vertical": [{"modifiers": ["Ctrl"], "key": "|"}],
+  "periodic-notes:open-daily-note": [{"modifiers": ["Ctrl", "Shift"], "key": "d"}],
+  "app:open-quick-switcher": [{"modifiers": ["Ctrl"], "key": "o"}],
+  "global-search:open": [{"modifiers": ["Ctrl", "Shift"], "key": "f"}],
+  "graph:open": [{"modifiers": ["Ctrl"], "key": "g"}],
+  "homepage:open-homepage": [{"modifiers": ["Ctrl"], "key": "d"}]
+}

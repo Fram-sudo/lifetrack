@@ -1,0 +1,15 @@
+/* ═══════════════════════════════════════════════════
+   COLORED FOLDERS — Lifetrack
+   ═══════════════════════════════════════════════════ */
+.nav-folder-title[data-path="0 - Inbox"] .nav-folder-title-content         { color:#e5c890;font-weight:700; }
+.nav-folder-title[data-path="2 - Domaines"] .nav-folder-title-content      { color:#cba6f7;font-weight:700; }
+.nav-folder-title[data-path="_Système"] .nav-folder-title-content           { color:#a6adc8;font-weight:700; }
+.nav-folder-title[data-path="2 - Domaines/Médias"] .nav-folder-title-content              { color:#e07b5a; }
+.nav-folder-title[data-path="2 - Domaines/Médias/Films"] .nav-folder-title-content        { color:#c4943a; }
+.nav-folder-title[data-path="2 - Domaines/Médias/Animés"] .nav-folder-title-content       { color:#e07b5a; }
+.nav-folder-title[data-path="2 - Domaines/Médias/Séries"] .nav-folder-title-content       { color:#df8e1d; }
+.nav-folder-title[data-path="2 - Domaines/Médias/Manga & Manwha"] .nav-folder-title-content { color:#8878c3; }
+.nav-folder-title[data-path="2 - Domaines/Médias/Romans & Livres"] .nav-folder-title-content { color:#4e8a5a; }
+.nav-folder-title[data-path="2 - Domaines/Médias/Jeux Vidéo"] .nav-folder-title-content   { color:#4a8fa8; }
+.nav-folder-title[data-path="2 - Domaines/Commandes"] .nav-folder-title-content           { color:#fe640b; }
+.nav-folder-title[data-path="2 - Domaines/Finances"] .nav-folder-title-content            { color:#40a02b; }

@@ -1,0 +1,48 @@
+/* ═══════════════════════════════════════════════════════
+   MOBILE RESPONSIVE — ajustements pour smartphones/tablettes
+   ═══════════════════════════════════════════════════════ */
+
+/* ── DESKTOP : restaurer la belle bannière 300px ───────
+   data.json est à 100px (base mobile), on override ici
+   sur desktop où le snippet CSS est bien chargé.       */
+@media (min-width: 701px) {
+  .obsidian-banner {
+    height: 300px !important;
+  }
+  .obsidian-banner .banner-image {
+    height: 300px !important;
+    object-fit: cover;
+  }
+  .obsidian-banner-wrapper {
+    margin-top: calc(300px - 15px) !important;
+  }
+  .obsidian-banner-wrapper:not(.has-banner-icon) {
+    margin-top: calc(300px - 15px) !important;
+  }
+  .obsidian-banner-spacer {
+    height: calc(300px - 24px) !important;
+  }
+}
+
+/* ── MOBILE : propriétés cachées (belt & suspenders
+   en plus de propertiesInDocument: hidden dans app.json) */
+.is-mobile .metadata-container {
+  display: none !important;
+}
+
+/* ── Padding général des notes sur mobile ───────────── */
+@media (max-width: 700px) {
+  .markdown-preview-view,
+  .markdown-source-view {
+    padding-left: 12px !important;
+    padding-right: 12px !important;
+  }
+
+  /* Tables Dataview : scroll horizontal natif */
+  .dataview.table-view-table {
+    display: block;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    white-space: nowrap;
+  }
+}
