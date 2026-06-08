@@ -18,7 +18,6 @@ SYSTEM_FILES = [
     # Scripts
     "_Système/Scripts/update.py",
     "_Système/Scripts/import_releves.py",
-    "_Système/Scripts/parse_finances.py",
     "_Système/Scripts/lancer_import.sh",
     "_Système/Scripts/lancer_import.bat",
     "_Système/Scripts/Import Relevés.bat",

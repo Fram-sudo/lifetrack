@@ -456,9 +456,7 @@ Pour gagner du temps, tu peux importer directement tes relevés PDF au lieu de t
 
 Les transactions apparaissent automatiquement dans Lifetrack. Tu peux corriger les catégories manuellement après import si besoin.
 
-**Banques supportées nativement :** Société Générale, Revolut
-
-**Autres banques :** clique sur **⚙️ Gérer les banques** pour configurer ta banque (format CSV, colonnes, séparateurs…).
+**Configurer ta banque :** clique sur **⚙️ Gérer les banques** pour configurer ta banque (format CSV/PDF, colonnes, format de date…).
 
 ### Comment les transactions sont stockées
 

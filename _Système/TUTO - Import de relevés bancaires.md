@@ -9,7 +9,7 @@
 
 **Linux** - double-clic sur `lancer_import.sh`, ou depuis un terminal :
 ```bash
-cd ~/Documents/Obsidian/Second\ Cerveau/_Système/Scripts
+cd ~/Documents/Obsidian/Lifetrack/_Système/Scripts
 ./lancer_import.sh
 ```
 
@@ -41,8 +41,6 @@ Chaque PDF reçoit automatiquement un badge coloré :
 
 | Badge | Signification |
 |-------|--------------|
-| 🟢 **SG** | Relevé Société Générale détecté |
-| 🔵 **Revolut** | Relevé Revolut détecté |
 | 🟣 **Nom banque** | Banque configurée manuellement |
 | ⬜ **?** | Banque inconnue - à configurer |
 
@@ -56,10 +54,10 @@ Pour retirer un PDF : clique dessus pour le sélectionner, puis **✕ Retirer**.
 
 Clique sur **🔍 Analyser les PDFs**.
 
-### Cas 1 - SG ou Revolut
-Le relevé est parsé automatiquement avec les règles de catégorisation intégrées. Rien à faire.
+### Banque connue (badge coloré)
+Le relevé est parsé automatiquement avec ta configuration et tes règles de catégorisation.
 
-### Cas 2 - Banque inconnue (badge **?**)
+### Banque inconnue (badge **?**)
 Une fenêtre de configuration s'ouvre automatiquement.
 
 #### Configurer une nouvelle banque
@@ -125,10 +123,6 @@ Confirme → les fichiers `💰 YYYY.json` dans `Transactions/` sont mis à jour
 
 Accessible via le bouton **⚙️ Gérer les banques** en bas à gauche.
 
-### Parsers intégrés (SG & Revolut)
-- **📋 Règles** - modifier les règles de catégorisation
-- **🚫 Désactiver** - si tu ne veux plus que ce parser soit utilisé automatiquement
-
 ### Banques configurées
 - **✏ Modifier** - changer le nom, compte, fingerprint, format date, ou règles
 - **🗑 Supprimer** - supprimer la configuration (les transactions déjà importées ne sont pas affectées)
@@ -162,9 +156,6 @@ Si un mot-clé d'une règle est **contenu dans** le mot-clé d'une règle suivan
 
 Cela se produit parce que le matching fonctionne par substring : "AMAZON" matche aussi "AMAZONPRIME". Il faut toujours mettre la règle la plus spécifique **avant** la plus générale.
 
-### Priorité
-Pour SG et Revolut, tes règles s'appliquent **avant** la logique automatique intégrée.
-
 ### Pré-remplissage automatique (nouvelle banque)
 Après avoir testé une config avec **🔍 Tester**, le bouton **✏ Configurer les règles** indique le nombre de libellés disponibles. En cliquant dessus, tu peux pré-remplir les règles avec tous les libellés détectés - plus qu'à choisir la catégorie et la direction pour chacun.
 
@@ -174,22 +165,20 @@ Après avoir testé une config avec **🔍 Tester**, le bouton **✏ Configurer 
 
 Le script empêche les doublons en deux passes lors de l'analyse :
 
-**Passe 1 - exacte :** vérifie si la transaction existe déjà par sa clé précise.
-- Pour **Revolut** : clé = `(date + solde_après + montant)` - le solde après chaque transaction est unique comme un numéro de série, indépendant du libellé.
-- Pour **les autres comptes** : clé = `(date + montant + libellé normalisé)`.
+**Passe 1 - exacte :** vérifie si la transaction existe déjà par sa clé précise `(date + montant + libellé normalisé)`.
 
-**Passe 2 - souple (tous les comptes sans solde_après) :** si la clé exacte ne matche pas mais qu'une transaction avec le même `(date + montant)` existe déjà, elle est considérée comme un doublon. Protège contre les légères variations de libellé entre deux exports du même compte.
+**Passe 2 - souple :** si la clé exacte ne matche pas mais qu'une transaction avec le même `(date + montant)` existe déjà, elle est considérée comme un doublon. Protège contre les légères variations de libellé entre deux exports du même compte.
 
 **Comptage :** si tu as deux vraies transactions à 15€ le même jour, les deux passent - le système compte les occurrences disponibles et n'en bloque que les excédents.
 
-> **En pratique :** tu peux importer un relevé "All Time" à n'importe quel moment sans créer de doublons, pour n'importe quelle banque.
+> **En pratique :** tu peux importer un relevé "All Time" à n'importe quel moment sans créer de doublons.
 
 ---
 
 ## 📁 Fichiers produits
 
 ```
-2 - Domaines/Personnel/Finances/Transactions/
+2 - Domaines/Finances/Transactions/
 ├── 💰 2023.json
 ├── 💰 2024.json
 ├── 💰 2025.json
@@ -204,8 +193,7 @@ Chaque transaction JSON :
   "montant":      -13.99,
   "categorie":    "📺 Abonnements",
   "type":         "dépense",
-  "compte":       "courant",
-  "balance_after": 1024.50
+  "compte":       "courant"
 }
 ```
 
@@ -213,8 +201,7 @@ Chaque transaction JSON :
 |-------|-------------------|
 | `montant` | Positif = entrée d'argent, négatif = sortie |
 | `type` | `revenu` / `dépense` / `épargne` / `épargne-retrait` / `avoir` |
-| `compte` | `courant` (SG) / `compte-secondaire` (Revolut) / id banque générique |
-| `balance_after` | Revolut uniquement - solde après la transaction |
+| `compte` | Identifiant du compte défini lors de la configuration de la banque |
 | `_manual` | `true` si saisie manuelle - jamais écrasée par import auto |
 
 ---
@@ -225,11 +212,9 @@ Chaque transaction JSON :
 Solde affiché = solde_initial + somme de tous les montants du compte
 ```
 
-Le `solde_initial` est configurable dans Finances.md > Paramètres > Comptes. Il est à 0 pour Revolut (compte ouvert en Sep 2024, importé depuis le début).
+Le `solde_initial` est configurable dans Finances.md > Paramètres > Comptes.
 
 **Ce qui est compté dans "Revenus" :** toutes les transactions avec `type = "revenu"` sauf les virements internes (`🔄 Transfert interne in/out`). Catégories concernées : Salaire, Revenus divers, Remboursement in, Bourse & Aides sociales.
-
-**Note sur les transactions en attente (pending) Revolut :** le relevé PDF n'inclut que les transactions confirmées. Les pending sont visibles dans l'app mais pas dans le PDF - elles apparaîtront dans les JSON au prochain import une fois confirmées. C'est normal que le solde calculé soit légèrement supérieur au solde app.
 
 ---
 

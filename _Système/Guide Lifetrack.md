@@ -477,11 +477,7 @@ Le moyen le plus rapide d'alimenter tes finances est d'importer tes relevés PDF
 
 > Les scripts installent automatiquement `pdfplumber` et `ttkbootstrap` si manquants.
 
-**Banques supportées nativement :**
-- Société Générale
-- Revolut
-
-**Autres banques :**
+**Configurer ta banque :**
 Clique sur **⚙️ Gérer les banques** dans la fenêtre du script. Tu peux configurer n'importe quelle banque en définissant le format de tes relevés CSV/PDF.
 
 **Changer le chemin du vault :**
