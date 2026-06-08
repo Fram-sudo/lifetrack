@@ -9,7 +9,7 @@ from pathlib import Path
 
 # ── CONFIGURATION ────────────────────────────────────────────────
 # A mettre a jour avec l'URL de ton depot GitHub apres publication
-REPO_RAW = "https://raw.githubusercontent.com/OWNER/lifetrack/main"
+REPO_RAW = "https://raw.githubusercontent.com/Fram-sudo/lifetrack/main"
 
 # ── FICHIERS SYSTEME ─────────────────────────────────────────────
 # Ces fichiers sont telecharges et ecrases a chaque mise a jour.
