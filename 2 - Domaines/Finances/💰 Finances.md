@@ -1137,7 +1137,10 @@ const _renderChart = () => {
       const mo=t.date.slice(0,7)
       if(!txByMonth[mo])txByMonth[mo]={income:0,expense:0,net:0}
       const m=parseFloat(t.montant)||0; txByMonth[mo].net+=m
-      if(m>0)txByMonth[mo].income+=m; else txByMonth[mo].expense+=Math.abs(m)
+      // Exclure virements internes et épargne des barres (mais pas du solde)
+      if(!isVirement(t)&&!isEpargne(t)){
+        if(m>0)txByMonth[mo].income+=m; else txByMonth[mo].expense+=Math.abs(m)
+      }
     }
     let bal=getSoldeInitial()
     const points=[{month:null,balance:bal}]
@@ -1247,8 +1250,11 @@ const _renderChart = () => {
     if(!txByDate[t.date])txByDate[t.date]={income:0,expense:0,net:0,items:[]}
     const m=parseFloat(t.montant)||0
     txByDate[t.date].net+=m
-    if(m>0) txByDate[t.date].income+=m
-    else txByDate[t.date].expense+=Math.abs(m)
+    // Exclure virements internes et épargne des barres (mais pas du solde)
+    if(!isVirement(t)&&!isEpargne(t)){
+      if(m>0) txByDate[t.date].income+=m
+      else txByDate[t.date].expense+=Math.abs(m)
+    }
     txByDate[t.date].items.push(t)
   }
 
