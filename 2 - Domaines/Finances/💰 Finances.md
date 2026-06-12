@@ -987,7 +987,7 @@ const _renderHeader = () => {
   if (_cmdEnAttente.length > 0) {
     const total=_cmdEnAttente.reduce((s,c)=>s+(parseFloat(c.montant)||0),0)
     const warn=sec.createDiv(); warn.style.cssText="display:flex;align-items:center;gap:8px;padding:8px 13px;background:rgba(254,100,11,0.06);border:1px solid rgba(254,100,11,0.2);border-radius:8px;font-size:0.82em;color:var(--text-muted);"
-    warn.textContent=`⏳ ${_cmdEnAttente.length} commande${_cmdEnAttente.length>1?"s":""} en attente de livraison - ${fmtC(total)} non encore comptabilisé${_cmdEnAttente.length>1?"es":"e"}`
+    warn.textContent=`⏳ ${_cmdEnAttente.length} commande${_cmdEnAttente.length>1?"s":""} en cours - ${fmtC(total)} déjà débité${_cmdEnAttente.length>1?"es":"e"} de ton compte`
   }
 }
 
