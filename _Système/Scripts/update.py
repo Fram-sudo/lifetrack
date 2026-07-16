@@ -66,6 +66,17 @@ SYSTEM_FILES = [
 # Fichier special : frontmatter utilisateur preserve, code JS mis a jour
 FINANCES_MD = "2 - Domaines/Finances/💰 Finances.md"
 
+# ── FICHIERS OBSOLETES ────────────────────────────────────────────
+# Anciens fichiers systeme remplaces par une version fusionnee/renommee.
+# Supprimes uniquement si le fichier de remplacement a ete telecharge avec succes,
+# pour eviter de perdre du contenu si le reseau coupe en cours de route.
+LEGACY_REMOVE = {
+    "_Système/MOC/MOC - Films, Animés & Séries.md": [
+        "_Système/MOC/MOC - Films & Animés.md",
+        "_Système/MOC/MOC - Séries.md",
+    ],
+}
+
 # Fichiers NE JAMAIS ajouter a SYSTEM_FILES (donnees personnelles / config locale) :
 #   _Système/Config.md, _Système/Scripts/bank_configs.json, _Système/Scripts/script_config.json,
 #   2 - Domaines/Sport/Data/*, 2 - Domaines/Finances/Transactions/*
@@ -169,7 +180,24 @@ def main():
         print(f"  x  {FINANCES_MD}")
         ko.append(FINANCES_MD)
 
+    # Nettoyage des anciens fichiers remplaces (uniquement si le remplacement a reussi)
+    removed = []
+    for new_path, old_paths in LEGACY_REMOVE.items():
+        if new_path not in ok:
+            continue
+        for old_path in old_paths:
+            old_file = vault / old_path
+            if old_file.exists():
+                try:
+                    old_file.unlink()
+                    print(f"  -  {old_path} (obsolete, supprime)")
+                    removed.append(old_path)
+                except Exception:
+                    pass
+
     print(f"\n {len(ok)} fichier(s) mis a jour", end="")
+    if removed:
+        print(f", {len(removed)} fichier(s) obsolete(s) supprime(s)", end="")
     if ko:
         print(f", {len(ko)} echec(s) : {', '.join(ko)}")
     else:
