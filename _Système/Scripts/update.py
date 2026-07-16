@@ -61,10 +61,18 @@ SYSTEM_FILES = [
     "_Système/Templates/Ajouter une session.md",
     # Domaine Sport
     "2 - Domaines/Sport/🏋️ Sport.md",
+    # Plugin obsidian-git
+    ".obsidian/plugins/obsidian-git/main.js",
+    ".obsidian/plugins/obsidian-git/manifest.json",
+    ".obsidian/plugins/obsidian-git/styles.css",
 ]
 
 # Fichier special : frontmatter utilisateur preserve, code JS mis a jour
 FINANCES_MD = "2 - Domaines/Finances/💰 Finances.md"
+
+# Fichier special : liste de plugins fusionnee (jamais ecrasee, pour ne pas
+# desactiver un plugin que l'utilisateur aurait installe de son cote).
+COMMUNITY_PLUGINS = ".obsidian/community-plugins.json"
 
 # ── FICHIERS OBSOLETES ────────────────────────────────────────────
 # Anciens fichiers systeme remplaces par une version fusionnee/renommee.
@@ -128,6 +136,28 @@ def update_finances(vault, new_content):
     return "cree"
 
 
+def update_community_plugins(vault, new_content):
+    """Fusionne la liste de plugins (union) au lieu d'ecraser : preserve les
+    plugins que l'utilisateur aurait installes de son cote."""
+    import json
+    dest = vault / COMMUNITY_PLUGINS
+    try:
+        new_list = json.loads(new_content)
+    except Exception:
+        return "contenu distant invalide, ignore"
+    current_list = []
+    if dest.exists():
+        try:
+            current_list = json.loads(dest.read_text(encoding="utf-8"))
+        except Exception:
+            current_list = []
+    merged = current_list + [p for p in new_list if p not in current_list]
+    dest.parent.mkdir(parents=True, exist_ok=True)
+    dest.write_text(json.dumps(merged, indent=2), encoding="utf-8")
+    added = [p for p in new_list if p not in current_list]
+    return f"fusionne ({len(added)} nouveau(x) : {', '.join(added)})" if added else "deja a jour"
+
+
 def make_executable(path):
     """Rend un fichier executable (Linux/Mac)."""
     if sys.platform != "win32":
@@ -179,6 +209,16 @@ def main():
     else:
         print(f"  x  {FINANCES_MD}")
         ko.append(FINANCES_MD)
+
+    # community-plugins.json (traitement special : fusion, jamais ecrase)
+    content = fetch(COMMUNITY_PLUGINS)
+    if content:
+        result = update_community_plugins(vault, content)
+        print(f"  v  {COMMUNITY_PLUGINS} ({result})")
+        ok.append(COMMUNITY_PLUGINS)
+    else:
+        print(f"  x  {COMMUNITY_PLUGINS}")
+        ko.append(COMMUNITY_PLUGINS)
 
     # Nettoyage des anciens fichiers remplaces (uniquement si le remplacement a reussi)
     removed = []
