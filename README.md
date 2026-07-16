@@ -35,14 +35,39 @@ Avantage : les mises à jour sont plus rapides (voir section [Mise à jour](#-mi
 
 ## 🔄 Mise à jour
 
-Quand une nouvelle version du vault est disponible, tu peux récupérer les changements en un double-clic.
+Quand une nouvelle version du vault est disponible, voici la procédure complète pour récupérer les dernières fonctionnalités.
 
-### Lancer la mise à jour
+### 1. Lancer la mise à jour
 
 - **Windows** : double-clique sur `update.bat` à la racine du vault
 - **Linux / Mac** : ouvre un terminal dans le dossier du vault et lance `./update.sh`
 
-Le script télécharge automatiquement les dernières versions des fichiers système depuis GitHub et les remplace sur ta machine.
+Le script télécharge automatiquement les dernières versions des fichiers système depuis GitHub et les remplace sur ta machine. Il supprime aussi de lui-même les anciens fichiers devenus obsolètes (par exemple d'anciens MOC fusionnés en un seul) — rien à faire de ton côté, rien de personnel n'est jamais touché.
+
+### 2. Rafraîchir Obsidian
+
+Une fois le script terminé, fais **Ctrl+R** (**Cmd+R** sur Mac) dans Obsidian pour recharger les fichiers modifiés.
+
+### 3. Activer les nouveaux plugins communautaires (si besoin)
+
+Une mise à jour peut ajouter un nouveau plugin (par ex. `obsidian-git`). Va dans **Réglages → Plugins communautaires** et active-le s'il n'est pas déjà coché — Obsidian te le propose généralement automatiquement après un `update`.
+
+### 4. Configurer la clé TMDB pour l'auto-remplissage (optionnel)
+
+`_Système/Config.md` n'est **jamais** téléchargé par le script (pour ne pas écraser une clé déjà renseignée). Si ce fichier n'existe pas encore dans ton vault, crée-le toi-même :
+
+```yaml
+---
+tmdb_api_key: ""
+obsidianUIMode: preview
+---
+```
+
+Puis suis les instructions de la section [Auto-remplissage TMDB / AniList](#auto-remplissage-tmdb--anilist) ci-dessous. Les fiches **Animés** n'ont besoin de rien : elles utilisent AniList, gratuit et sans clé.
+
+### 5. Bon à savoir : les fiches déjà créées ne changent pas de design
+
+Les templates (Film, Série, Animé...) ne s'appliquent qu'au moment de la création d'une note : le code d'affichage est écrit une fois dans le fichier, il n'est pas relu depuis le template à chaque ouverture. Une mise à jour des templates n'ajoute donc les nouveaux éléments (bannière, titre original, saga...) qu'aux **nouvelles** fiches créées après la mise à jour — tes fiches existantes continuent de fonctionner normalement mais gardent leur ancien affichage. Le Dashboard et les MOC, eux, se mettent à jour automatiquement pour toutes les fiches (anciennes et nouvelles), puisqu'ils lisent les données à chaque ouverture.
 
 ### Ce qui est mis à jour
 
