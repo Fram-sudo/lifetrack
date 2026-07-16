@@ -1,7 +1,9 @@
 # 📥 Tuto - Import de relevés bancaires
 
-> Script : `_Système/Scripts/import_releves.py`  
+> Script : `_Système/Scripts/import_releves.py` (utilise `parse_finances.py` pour SG/Revolut)
 > Lanceur Linux : `lancer_import.sh` - Lanceur Windows : `Import Relevés.bat`
+
+Le script reconnaît **nativement** les relevés PDF **Société Générale** et **Revolut**, avec catégorisation automatique déjà configurée. Pour toute autre banque, configure-la manuellement en quelques clics (voir Étape 2).
 
 ---
 
@@ -41,6 +43,8 @@ Chaque PDF reçoit automatiquement un badge coloré :
 
 | Badge | Signification |
 |-------|--------------|
+| 🔵 **SG** | Relevé Société Générale - reconnu et parsé nativement |
+| 🟣 **Revolut** | Relevé Revolut - reconnu et parsé nativement |
 | 🟣 **Nom banque** | Banque configurée manuellement |
 | ⬜ **?** | Banque inconnue - à configurer |
 
@@ -55,7 +59,7 @@ Pour retirer un PDF : clique dessus pour le sélectionner, puis **✕ Retirer**.
 Clique sur **🔍 Analyser les PDFs**.
 
 ### Banque connue (badge coloré)
-Le relevé est parsé automatiquement avec ta configuration et tes règles de catégorisation.
+Le relevé est parsé automatiquement avec ta configuration et tes règles de catégorisation. Pour SG et Revolut, des règles de catégorisation génériques sont déjà incluses (enseignes nationales/internationales) - tu peux les affiner ou en ajouter via **⚙️ Gérer les banques → 📋 Règles**.
 
 ### Banque inconnue (badge **?**)
 Une fenêtre de configuration s'ouvre automatiquement.
@@ -122,6 +126,11 @@ Confirme → les fichiers `💰 YYYY.json` dans `Transactions/` sont mis à jour
 ## ⚙️ Gérer les banques
 
 Accessible via le bouton **⚙️ Gérer les banques** en bas à gauche.
+
+### Parsers intégrés (SG, Revolut)
+Section en lecture seule listant les deux parsers natifs. Pour chacun :
+- **📋 Règles** - configure/affine les règles de catégorisation (mêmes que pour une banque manuelle)
+- **🚫 Désactiver** - désactive la détection automatique pour cette banque (utile si tu veux la reconfigurer manuellement à la place). **✓ Réactiver** pour revenir en arrière.
 
 ### Banques configurées
 - **✏ Modifier** - changer le nom, compte, fingerprint, format date, ou règles

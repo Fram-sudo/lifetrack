@@ -1,23 +1,224 @@
 <%*
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+//  TPL - Animé  (intégration AniList)
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+// ── Statut ──────────────────────────────────────
 const statut = await tp.system.suggester(
   ["▶️ En cours", "👁️ À voir", "✅ Vu", "❌ Abandonné", "⏸️ En pause"],
   ["en cours", "à voir", "vu", "abandonné", "en pause"]
-);
-const nbSaisons = parseInt(await tp.system.prompt("Nombre de saisons", "1")) || 1
+)
 const _an_sub = {"en cours":"En cours","à voir":"À voir","vu":"Terminé","abandonné":"Abandonné","en pause":"En pause"}[statut] || "À voir"
-await tp.file.move("2 - Domaines/Médias/Animés/" + _an_sub + "/" + tp.file.title)
+
+// ── Variables (valeurs par défaut = mode manuel) ─
+let titre = tp.file.title
+let titre_original = ""
+let anilist_id = ""
+let studio = ""
+let genres = []
+let covers = []
+let banniere = ""
+let année = ""
+let nbSaisons = 1
+let saga = ""
+let saga_num = 1
+let saison_precedente = ""
+let saison_suivante = ""
+let épisodes = ""
+let synopsis = ""
+
+// ── Nettoyage HTML + traduction FR (descriptions AniList) ──
+const _cleanTranslate = async (html) => {
+  if (!html) return ""
+  const _t = html.replace(/<br\s*\/?>/gi,' ').replace(/~![\s\S]*?!~/g,'').replace(/<[^>]+>/g,'').replace(/\s+/g,' ').trim()
+  if (!_t) return ""
+  try {
+    const _r = await fetch('https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl=fr&dt=t&q='+encodeURIComponent(_t))
+    const _d = await _r.json()
+    return _d[0].map(s=>s[0]).join('')
+  } catch(_e) { return _t }
+}
+
+// ── Source AniList (optionnel) ───────────────────
+const _src = await tp.system.prompt("ID ou URL AniList ? (Entrée pour mode manuel)", "")
+
+if (_src && _src.trim()) {
+  const _m = _src.trim().match(/(\d+)/)
+  const _aid = _m ? parseInt(_m[1]) : null
+  if (_aid) {
+    try {
+      const _q = `query($id:Int){Media(id:$id,type:ANIME){id title{romaji english native}format genres studios{nodes{name isAnimationStudio}}seasonYear episodes description coverImage{extraLarge}bannerImage relations{edges{relationType node{id title{romaji english native}type format seasonYear}}}}}`
+      const _resp = await fetch("https://graphql.anilist.co",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({query:_q,variables:{id:_aid}})})
+      const _data = await _resp.json()
+      const _med = _data.data.Media
+
+      // ── Choix du titre ──
+      const _tO=[], _tV=[]
+      if(_med.title.english){_tO.push("🇬🇧 "+_med.title.english);_tV.push(_med.title.english)}
+      if(_med.title.romaji){_tO.push("🎌 "+_med.title.romaji);_tV.push(_med.title.romaji)}
+      if(_med.title.native){_tO.push("🇯🇵 "+_med.title.native);_tV.push(_med.title.native)}
+      _tO.push("✏ Saisir manuellement");_tV.push(null)
+      const _chosen = await tp.system.suggester(_tO, _tV)
+      titre = _chosen || await tp.system.prompt("Titre", _med.title.romaji || tp.file.title)
+      // Langue choisie → utilisée pour les titres des notes saga liées
+      const _langPref = (_med.title.english && titre === _med.title.english) ? 'english' : (_med.title.native && titre === _med.title.native) ? 'native' : 'romaji'
+      const _getLinkedTitle = (t) => _langPref==='english' ? (t.english||t.romaji||t.native||'') : _langPref==='native' ? (t.native||t.romaji||t.english||'') : (t.romaji||t.english||t.native||'')
+
+      // ── Infos ──
+      anilist_id = String(_aid)
+      titre_original = _med.title.romaji || ""
+      genres = _med.genres || []
+      studio = _med.studios?.nodes?.find(s=>s.isAnimationStudio)?.name || ""
+      covers = _med.coverImage?.extraLarge ? [_med.coverImage.extraLarge, _med.coverImage.extraLarge] : []
+      banniere = _med.bannerImage || ""
+      année = _med.seasonYear ? String(_med.seasonYear) : ""
+      nbSaisons = 1 // chaque entrée AniList = 1 saison
+      épisodes = _med.episodes ? String(_med.episodes) : ""
+      synopsis = await _cleanTranslate(_med.description || "")
+
+      // ── Relations (prequels/sequels — saisons principales uniquement) ──
+      const _MAIN_FMT = ["TV","TV_SHORT","ONA"]
+      const _seqs=(_med.relations?.edges||[]).filter(e=>e.relationType==="SEQUEL"&&e.node.type==="ANIME"&&_MAIN_FMT.includes(e.node.format)).sort((a,b)=>(a.node.seasonYear||0)-(b.node.seasonYear||0))
+      const _pres=(_med.relations?.edges||[]).filter(e=>e.relationType==="PREQUEL"&&e.node.type==="ANIME"&&_MAIN_FMT.includes(e.node.format)).sort((a,b)=>(a.node.seasonYear||0)-(b.node.seasonYear||0))
+
+      if (_pres.length+_seqs.length > 0) {
+        const _allRels=[..._pres,..._seqs]
+        const _relLbls=_allRels.map(r=>`${r.relationType==="PREQUEL"?"⬅":"➡"} ${_getLinkedTitle(r.node.title)} (${r.node.seasonYear||"?"})`)
+        const _doCreate = await tp.system.suggester(
+          [`✅ Oui - créer ${_allRels.length} saison(s) liée(s) (${_relLbls.join(", ")})`, "⬜ Non - note courante uniquement"],
+          [true, false]
+        )
+        if (_doCreate) {
+          const _tplFile = app.vault.getAbstractFileByPath("_Système/Templates/TPL - Animé.md")
+          const _rawTpl = await app.vault.read(_tplFile)
+          const _tplEndTag='-'+'%'+'>'; let _bi=_rawTpl.indexOf(_tplEndTag)+_tplEndTag.length
+          let _dc=0
+          for(let _i=_bi;_i<_rawTpl.length-2;_i++){if(_rawTpl[_i]==='-'&&_rawTpl[_i+1]==='-'&&_rawTpl[_i+2]==='-'){_dc++;if(_dc===2){_bi=_i+3;break}_i+=2}}
+          const _tplBody = _rawTpl.slice(_bi)
+            .replace(new RegExp('^# <' + '% tp\\.file\\.title ' + '%' + '>$','m'),"# __TITRE__")
+            .replace(new RegExp('<' + '%\\* for \\(let i = 1; i <= nbSaisons; i\\+\\+\\) \\{ -' + '%' + '>\\n','g'),"")
+            .replace(new RegExp('## Saison <' + '% i ' + '%' + '>','g'),"## Saison 1")
+            .replace(new RegExp('<' + '%\\* \\} -' + '%' + '>\\n','g'),"")
+            .replace(new RegExp('<' + '% tp\\.date\\.now\\("DD\\/MM\\/YYYY"\\) ' + '%' + '>','g'),new Date().toLocaleDateString("fr-FR",{day:"2-digit",month:"2-digit",year:"numeric"}))
+
+          const _allNotes=[
+            ..._pres.map(r=>({titre:_getLinkedTitle(r.node.title),aid:r.node.id,year:r.node.seasonYear||0})),
+            {titre,aid:_aid,year:_med.seasonYear||0},
+            ..._seqs.map(r=>({titre:_getLinkedTitle(r.node.title),aid:r.node.id,year:r.node.seasonYear||0}))
+          ].sort((a,b)=>a.year-b.year)
+
+          // ── Détection saga existante dans le vault ──
+          const _dvApi = app.plugins.plugins['dataview']?.api
+          if (_dvApi) {
+            for(const _rn of _allNotes){
+              if(_rn.aid===_aid) continue
+              const _ep=_dvApi.pages('"2 - Domaines/Médias/Animés"').where(p=>String(p.anilist_id)===String(_rn.aid)).first()
+              if(_ep?.saga){saga=_ep.saga;break}
+            }
+          }
+          if(!saga) saga=titre
+
+          // ── Position chronologique (saga_num) ──
+          const _myIdx=_allNotes.findIndex(n=>n.aid===_aid)
+          saga_num = _myIdx>=0 ? _myIdx+1 : 1
+
+          const _today=new Date().toISOString().slice(0,10)
+          const _bf="2 - Domaines/Médias/Animés/À voir"
+          // Cherche une note animé existante dans tous les sous-dossiers
+          const _findAnime = (sn) => { for(const _sf of ["À voir","En cours","Terminé","Abandonné","En pause"]){const _f=app.vault.getAbstractFileByPath(`2 - Domaines/Médias/Animés/${_sf}/${sn}.md`);if(_f)return _f}; return null }
+
+          let _nbCreated=0,_nbUpdated=0
+          for(let _ni=0;_ni<_allNotes.length;_ni++){
+            const _n=_allNotes[_ni]
+            const _sn=_n.titre.replace(/[/\\:*?"<>|]/g,"")
+            const _nPrev=_ni>0?`[[${_allNotes[_ni-1].titre}]]`:""
+            const _nNext=_ni<_allNotes.length-1?`[[${_allNotes[_ni+1].titre}]]`:""
+            if(_n.aid===_aid){
+              if(_ni>0) saison_precedente=_nPrev
+              if(_ni<_allNotes.length-1) saison_suivante=_nNext
+              continue
+            }
+            const _existingFile=_findAnime(_sn)
+            if(_existingFile){
+              // Note existante : mise à jour des liens + saga_num
+              try{
+                await app.fileManager.processFrontMatter(_existingFile,fm=>{
+                  fm.saison_precedente=_nPrev
+                  fm.saison_suivante=_nNext
+                  fm.saga=saga
+                  fm.saga_num=_ni+1
+                })
+                _nbUpdated++
+              }catch(_e){new Notice("❌ MAJ "+_n.titre+": "+_e.message,4000)}
+              continue
+            }
+            // Note inexistante : récupération AniList et création
+            let _nC=[],_nB="",_nS="",_nG=[],_nA="",_nR="",_nEp="",_nSyn=""
+            try{
+              const _qn=`query($id:Int){Media(id:$id,type:ANIME){title{romaji}genres studios{nodes{name isAnimationStudio}}seasonYear episodes description coverImage{extraLarge}bannerImage}}`
+              const _rn=await fetch("https://graphql.anilist.co",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({query:_qn,variables:{id:_n.aid}})})
+              const _dn=await _rn.json();const _mn=_dn.data.Media
+              _nC=_mn.coverImage?.extraLarge?[_mn.coverImage.extraLarge,_mn.coverImage.extraLarge]:[]
+              _nB=_mn.bannerImage||""
+              _nS=_mn.studios?.nodes?.find(s=>s.isAnimationStudio)?.name||""
+              _nG=_mn.genres||[]
+              _nA=_mn.seasonYear?String(_mn.seasonYear):""
+              _nR=_mn.title?.romaji||""
+              _nEp=_mn.episodes?String(_mn.episodes):""
+              _nSyn=await _cleanTranslate(_mn.description||"")
+            }catch(_e){}
+            const _nCY=_nC.length?'['+_nC.map(c=>`"${c}"`).join(',')+']\n':'[]\n'
+            const _nGY=_nG.length?'['+_nG.map(g=>`"${g.replace(/"/g,"'")}"`).join(',')+']':'[]'
+            const _nFm=`---\ntype: animé\ncreated: ${_today}\ntitre: "${_n.titre.replace(/"/g,"'")}"\ntitre_original: "${_nR.replace(/"/g,"'")}"\nanilist_id: ${_n.aid}\ncovers: ${_nCY}banniere: "${_nB}"\nstudio: "${_nS.replace(/"/g,"'")}"\ngenre: ${_nGY}\nannée: ${_nA}\nstatut: "à voir"\nnote:\nsaga: "${saga.replace(/"/g,"'")}"\nsaga_num: ${_ni+1}\nsaison_precedente: "${_nPrev}"\nsaison_suivante: "${_nNext}"\nsessions: []\ntags: [animé, média]\nobsidianUIMode: preview\n---`
+            const _nBody=_tplBody.replace("# __TITRE__","# "+_n.titre).replace(new RegExp('<'+'% épisodes '+'%'+'>'),_nEp).replace(new RegExp('<'+'% synopsis '+'%'+'>'),_nSyn)
+            try{
+              await app.vault.adapter.mkdir(_bf)
+              await app.vault.create(`${_bf}/${_sn}.md`,_nFm+_nBody)
+              _nbCreated++
+            }catch(_e){new Notice("❌ "+_n.titre+": "+_e.message,4000)}
+          }
+          const _parts=[]
+          if(_nbCreated>0) _parts.push(`${_nbCreated} créée(s)`)
+          if(_nbUpdated>0) _parts.push(`${_nbUpdated} mise(s) à jour`)
+          if(_parts.length) new Notice(`✓ Saga : ${_parts.join(", ")}`,3000)
+        }
+      }
+      // ── Saga standalone (sans relations ou refus de création) ──
+      if(!saga) saga=titre
+      new Notice("✓ AniList : "+titre,2000)
+    } catch(_e){ new Notice("❌ AniList : "+_e.message,5000) }
+  } else {
+    new Notice("ID AniList invalide",3000)
+    nbSaisons = parseInt(await tp.system.prompt("Nombre de saisons","1"))||1
+    if(!saga) saga=titre
+  }
+} else {
+  nbSaisons = parseInt(await tp.system.prompt("Nombre de saisons","1"))||1
+  if(!saga) saga=titre
+}
+
+const _coversYaml = covers.length ? '['+covers.map(c=>`"${c}"`).join(',')+']' : '[]'
+const _genresYaml = genres.length ? '['+genres.map(g=>`"${g.replace(/"/g,"'")}"`).join(',')+']' : '[]'
+const _safeTitre = titre.replace(/[/\\:*?"<>|]/g,"")
+await tp.file.move("2 - Domaines/Médias/Animés/" + _an_sub + "/" + _safeTitre)
 -%>
 ---
 type: animé
 created: <% tp.date.now("YYYY-MM-DD") %>
-titre: "<% tp.file.title %>"
-covers: []
-banniere: ""
-studio: ""
-genre: []
-saisons: <% nbSaisons %>
+titre: "<% titre %>"
+titre_original: "<% titre_original %>"
+anilist_id: <% anilist_id %>
+covers: <% _coversYaml %>
+banniere: "<% banniere %>"
+studio: "<% studio %>"
+genre: <% _genresYaml %>
+année: <% année %>
 statut: "<% statut %>"
 note:
+saga: "<% saga %>"
+saga_num: <% saga_num %>
+saison_precedente: "<% saison_precedente %>"
+saison_suivante: "<% saison_suivante %>"
 sessions: []
 tags: [animé, média]
 obsidianUIMode: preview
@@ -255,6 +456,18 @@ const MOVE_MAP = {"en cours":"2 - Domaines/Médias/Animés/En cours","à voir":"
   const _f = app.vault.getAbstractFileByPath(p.file.path)
   if (_f && _f.parent && _f.parent.path !== _t) setTimeout(() => { try { moveToFolder(_t) } catch(e) {} }, 500)
 })()
+// ── Auto-rename : fichier = titre ────────────────
+;(function(){
+  if(!p?.titre||!p?.file) return
+  const _safe=p.titre.replace(/[/\\:*?"<>|]/g,"")
+  const _cur=p.file.name.replace(/\.md$/,"")
+  if(_cur===_safe) return
+  const _f=app.vault.getAbstractFileByPath(p.file.path)
+  if(!_f) return
+  setTimeout(async()=>{
+    try{ await app.fileManager.renameFile(_f,(p.file.folder?p.file.folder+"/":"")+_safe+".md") }catch(_e){}
+  },1200)
+})()
 const STATUS_COLOR = {"en cours":"#1e66f5","a voir":"#8839ef","vu":"#40a02b","abandonne":"#d20f39","en pause":"#fe640b"}
 const STATUS_LIST  = ["en cours","à voir","vu","abandonné","en pause"]
 const STATUS_KEY   = {"en cours":"en cours","à voir":"a voir","vu":"vu","abandonné":"abandonne","en pause":"en pause"}
@@ -319,6 +532,19 @@ for (let i = 1; i <= 10; i++) {
   if (p.note === i) opt.selected = true
 }
 sel.onchange = () => { const v = parseInt(sel.value); if (v) save("note", v) }
+
+// ── Titre VO & Année ──
+if (p.titre_original) mkRow("Titre VO", p.titre_original, () => editField("titre_original", "Titre original (VO)", p.titre_original||"", false))
+mkRow("Année", p.année != null ? String(p.année) : "-", () => editField("année", "Année", p.année||"", true))
+// ── Saga & Navigation saisons ──
+if (p.saga || p.saison_precedente || p.saison_suivante) {
+  const _ol = lnk => { const _m=String(lnk||"").match(/\[\[([^\]|]+)/); if(_m) app.workspace.openLinkText(_m[1],"") }
+  const _sw = infoCol.createDiv(); _sw.style.cssText="background:var(--background-secondary);border-radius:8px;padding:7px 10px;margin-top:2px;"
+  if (p.saga) { const _sl=_sw.createEl("div"); _sl.style.cssText="font-size:0.72em;color:var(--text-muted);font-weight:600;text-transform:uppercase;letter-spacing:0.04em;margin-bottom:5px;"; _sl.textContent="🎯 SAGA : "+p.saga }
+  const _nr=_sw.createDiv(); _nr.style.cssText="display:flex;gap:6px;"
+  if (p.saison_precedente) { const _b=_nr.createEl("button",{attr:{style:"padding:3px 10px;border-radius:6px;border:1px solid var(--background-modifier-border);background:transparent;cursor:pointer;font-size:0.8em;color:var(--text-muted);font-family:inherit;"}}); _b.textContent="← Précédent"; _b.onclick=()=>_ol(p.saison_precedente) }
+  if (p.saison_suivante) { const _b=_nr.createEl("button",{attr:{style:"padding:3px 10px;border-radius:6px;border:1px solid var(--background-modifier-border);background:transparent;cursor:pointer;font-size:0.8em;color:var(--text-muted);font-family:inherit;"}}); _b.textContent="Suivant →"; _b.onclick=()=>_ol(p.saison_suivante) }
+}
 
 const nbSais = p.saisons || 1
 const saisonCovers = covers.slice(1)
@@ -524,8 +750,8 @@ btnMod.onclick = e => {
 <%* for (let i = 1; i <= nbSaisons; i++) { -%>
 
 ## Saison <% i %>
-**Épisodes :**
-**Synopsis :**
+**Épisodes :** <% épisodes %>
+**Synopsis :** <% synopsis %>
 
 <%* } -%>
 ## 🔗 Animés similaires

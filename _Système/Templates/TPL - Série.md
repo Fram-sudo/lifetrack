@@ -1,21 +1,114 @@
 <%*
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+//  TPL - Série  (intégration TMDB / IMDb)
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+// ── Statut ──────────────────────────────────────
 const statut = await tp.system.suggester(
   ["▶️ En cours", "👁️ À voir", "✅ Vu", "❌ Abandonné", "⏸️ En pause"],
   ["en cours", "à voir", "vu", "abandonné", "en pause"]
-);
-const nbSaisons = parseInt(await tp.system.prompt("Nombre de saisons", "1")) || 1
+)
 const _an_sub = {"en cours":"En cours","à voir":"À voir","vu":"Terminé","abandonné":"Abandonné","en pause":"En pause"}[statut] || "À voir"
-await tp.file.move("2 - Domaines/Médias/Séries/" + _an_sub + "/" + tp.file.title)
+
+// ── Variables (valeurs par défaut = mode manuel) ─
+let titre = tp.file.title
+let titre_original = ""
+let tmdb_id = ""
+let genres = []
+let covers = []
+let banniere = ""
+let année = ""
+let nbSaisons = 1
+let plateforme = ""
+let saga = ""
+let saison_precedente = ""
+let saison_suivante = ""
+let _sData = {}
+
+// ── Clé TMDB depuis Config.md ───────────────────
+let _TMDB_KEY = ""
+try {
+  const _cf=app.vault.getAbstractFileByPath("_Système/Config.md")
+  if(_cf){const _cc=app.metadataCache.getFileCache(_cf); _TMDB_KEY=_cc?.frontmatter?.tmdb_api_key||""}
+} catch(_e){}
+
+// ── Source TMDB / IMDb (optionnel) ──────────────
+const _src = await tp.system.prompt("ID ou URL TMDB/IMDb ? (Entrée pour mode manuel)", "")
+
+if (_src && _src.trim()) {
+  if (!_TMDB_KEY) {
+    new Notice("⚠ Clé TMDB manquante - remplis _Système/Config.md",5000)
+  } else {
+    const _raw = _src.trim()
+    let _tmdbId = null
+    try {
+      const _imdbM=_raw.match(/tt\d+/)
+      if(_imdbM){
+        const _fr=await fetch(`https://api.themoviedb.org/3/find/${_imdbM[0]}?api_key=${_TMDB_KEY}&external_source=imdb_id`)
+        const _fd=await _fr.json()
+        _tmdbId=_fd.tv_results?.[0]?.id||null
+      } else {
+        const _nm=_raw.match(/\/tv\/(\d+)/)||_raw.match(/^(\d+)$/)
+        if(_nm) _tmdbId=parseInt(_nm[1])
+      }
+      if(_tmdbId){
+        const _dr=await fetch(`https://api.themoviedb.org/3/tv/${_tmdbId}?api_key=${_TMDB_KEY}&language=fr-FR`)
+        const _tv=await _dr.json()
+
+        // Choix du titre
+        const _tO=[],_tV=[]
+        if(_tv.name&&_tv.name!==_tv.original_name){_tO.push("🇫🇷 "+_tv.name);_tV.push(_tv.name)}
+        if(_tv.original_name){_tO.push("🌐 "+_tv.original_name);_tV.push(_tv.original_name)}
+        _tO.push("✏ Saisir manuellement");_tV.push(null)
+        const _chosen=await tp.system.suggester(_tO,_tV)
+        titre=_chosen||await tp.system.prompt("Titre",_tv.name||tp.file.title)
+
+        tmdb_id=String(_tmdbId)
+        titre_original=_tv.original_name||""
+        genres=(_tv.genres||[]).map(g=>g.name)
+        année=_tv.first_air_date?_tv.first_air_date.slice(0,4):""
+        nbSaisons=_tv.number_of_seasons||1
+        covers=_tv.poster_path?[`https://image.tmdb.org/t/p/original${_tv.poster_path}`]:[]
+        // Récupère les covers par saison depuis TMDB (covers[i] = poster saison i)
+        const _sCovers=(_tv.seasons||[]).filter(s=>s.season_number>0&&s.poster_path).sort((a,b)=>a.season_number-b.season_number)
+        if(_sCovers.length>0){const _maxS=_sCovers[_sCovers.length-1].season_number;while(covers.length<=_maxS)covers.push("");_sCovers.forEach(s=>{covers[s.season_number]=`https://image.tmdb.org/t/p/original${s.poster_path}`})}
+        // Épisodes et synopsis par saison
+        for(const _ss of (_tv.seasons||[])){if(_ss.season_number>0)_sData[_ss.season_number]={episodes:_ss.episode_count!=null?String(_ss.episode_count):"",synopsis:_ss.overview||""}}
+        banniere=_tv.backdrop_path?`https://image.tmdb.org/t/p/original${_tv.backdrop_path}`:""
+        plateforme=(_tv.networks||[]).map(n=>n.name).join(", ")||""
+        saga=titre // pour les séries, saga = titre principal (pour regrouper dans les MOC)
+
+        new Notice("✓ TMDB : "+titre+" ("+nbSaisons+" saison"+(nbSaisons>1?"s":"")+")",2000)
+      } else { new Notice("Série non trouvée sur TMDB",3000) }
+    } catch(_e){ new Notice("❌ TMDB : "+_e.message,5000) }
+  }
+}
+
+if (!_src || !_src.trim() || !_TMDB_KEY) {
+  nbSaisons = parseInt(await tp.system.prompt("Nombre de saisons","1"))||1
+  plateforme = await tp.system.prompt("Plateforme (Netflix, Prime, Disney+…)","") || ""
+}
+
+const _coversYaml = covers.length ? '['+covers.map(c=>`"${c}"`).join(',')+']' : '[]'
+const _genresYaml = genres.length ? '['+genres.map(g=>`"${g.replace(/"/g,"'")}"`).join(',')+']' : '[]'
+const _safeTitre = titre.replace(/[/\\:*?"<>|]/g,"")
+await tp.file.move("2 - Domaines/Médias/Séries/" + _an_sub + "/" + _safeTitre)
 -%>
 ---
 type: série
 created: <% tp.date.now("YYYY-MM-DD") %>
-titre: "<% tp.file.title %>"
-covers: []
-banniere: ""
-studio: ""
-genre: []
+titre: "<% titre %>"
+titre_original: "<% titre_original %>"
+tmdb_id: <% tmdb_id %>
+covers: <% _coversYaml %>
+banniere: "<% banniere %>"
+genre: <% _genresYaml %>
 saisons: <% nbSaisons %>
+année: <% année %>
+plateforme: "<% plateforme %>"
+saga: "<% saga %>"
+saison_precedente: "<% saison_precedente %>"
+saison_suivante: "<% saison_suivante %>"
 statut: "<% statut %>"
 note:
 sessions: []
@@ -64,10 +157,7 @@ const _run = (_t=0) => {
         const _np=(_p.file.folder?_p.file.folder+'/':'')+_v+'.md';
         if(_fp!==_np){
           await new Promise(res=>{
-            const _chk=(_n=0)=>{
-              if(app.plugins.plugins['dataview']?.api?.page(_fp)?.titre===_v||_n>20){res();return;}
-              setTimeout(()=>_chk(_n+1),100);
-            };
+            const _chk=(_n=0)=>{ if(app.plugins.plugins['dataview']?.api?.page(_fp)?.titre===_v||_n>20){res();return;} setTimeout(()=>_chk(_n+1),100); };
             setTimeout(()=>_chk(),100);
           });
           const _f2=app.vault.getAbstractFileByPath(_fp);
@@ -248,12 +338,31 @@ const mkDatePicker = (parent, initVal, onChange, placeholder) => {
 
 const BTN = "padding:5px 12px;border-radius:8px;border:1px solid var(--background-modifier-border);background:var(--background-secondary);cursor:pointer;font-size:0.82em;color:var(--text-normal);font-family:inherit;"
 
-const MOVE_MAP = {"en cours":"2 - Domaines/Médias/Séries/En cours","à voir":"2 - Domaines/Médias/Séries/À voir","vu":"2 - Domaines/Médias/Séries/Terminé","abandonné":"2 - Domaines/Médias/Séries/Abandonné","en pause":"2 - Domaines/Médias/Séries/En pause"}
+const MOVE_MAP = {
+  "en cours":  "2 - Domaines/Médias/Séries/En cours",
+  "à voir":    "2 - Domaines/Médias/Séries/À voir",
+  "vu":        "2 - Domaines/Médias/Séries/Terminé",
+  "terminé":   "2 - Domaines/Médias/Séries/Terminé",
+  "abandonné": "2 - Domaines/Médias/Séries/Abandonné",
+  "en pause":  "2 - Domaines/Médias/Séries/En pause",
+}
 ;(function(){
   const _t = MOVE_MAP[p.statut]
   if (!_t) return
   const _f = app.vault.getAbstractFileByPath(p.file.path)
   if (_f && _f.parent && _f.parent.path !== _t) setTimeout(() => { try { moveToFolder(_t) } catch(e) {} }, 500)
+})()
+// ── Auto-rename : fichier = titre ────────────────
+;(function(){
+  if(!p?.titre||!p?.file) return
+  const _safe=p.titre.replace(/[/\\:*?"<>|]/g,"")
+  const _cur=p.file.name.replace(/\.md$/,"")
+  if(_cur===_safe) return
+  const _f=app.vault.getAbstractFileByPath(p.file.path)
+  if(!_f) return
+  setTimeout(async()=>{
+    try{ await app.fileManager.renameFile(_f,(p.file.folder?p.file.folder+"/":"")+_safe+".md") }catch(_e){}
+  },1200)
 })()
 const STATUS_COLOR = {"en cours":"#1e66f5","a voir":"#8839ef","vu":"#40a02b","abandonne":"#d20f39","en pause":"#fe640b"}
 const STATUS_LIST  = ["en cours","à voir","vu","abandonné","en pause"]
@@ -281,7 +390,7 @@ const infoCol = top.createEl("div", {attr:{style:`flex:1;display:flex;flex-direc
 
 const mkRow = (label, display, onEdit) => {
   const r = infoCol.createEl("div", {attr:{style:"display:flex;gap:10px;font-size:0.85em;align-items:center;"}})
-  r.createEl("span", {attr:{style:"color:var(--text-muted);width:65px;flex-shrink:0;"}}).textContent = label
+  r.createEl("span", {attr:{style:"color:var(--text-muted);width:80px;flex-shrink:0;"}}).textContent = label
   const valWrap = r.createEl("span", {attr:{style:"display:flex;align-items:center;gap:5px;flex:1;" + (onEdit ? "cursor:pointer;" : "")}})
   const val = valWrap.createEl("span", {attr:{style:"color:var(--text-normal);font-weight:500;"}})
   val.textContent = display
@@ -294,7 +403,7 @@ const mkRow = (label, display, onEdit) => {
 }
 
 const sRow = infoCol.createEl("div", {attr:{style:"display:flex;gap:10px;font-size:0.85em;align-items:center;"}})
-sRow.createEl("span", {attr:{style:"color:var(--text-muted);width:65px;flex-shrink:0;"}}).textContent = "Statut"
+sRow.createEl("span", {attr:{style:"color:var(--text-muted);width:80px;flex-shrink:0;"}}).textContent = "Statut"
 const badge = sRow.createEl("span", {attr:{style:"background:" + sColor + ";color:#fff;padding:2px 9px;border-radius:10px;font-size:0.85em;font-weight:600;cursor:pointer;user-select:none;"}})
 badge.textContent = p.statut || "-"
 badge.onclick = e => {
@@ -304,13 +413,14 @@ badge.onclick = e => {
   menu.showAtMouseEvent(e)
 }
 
-mkRow("Studio",  p.studio || "-",  () => editField("studio", "Studio", p.studio || "", false))
+mkRow("Saisons",    p.saisons != null ? String(p.saisons) : "-",  () => editField("saisons", "Saisons", p.saisons, true))
+mkRow("Année",      p.année   != null ? String(p.année)   : "-",  () => editField("année", "Année", p.année, true))
+mkRow("Plateforme", p.plateforme || "-", () => editField("plateforme", "Plateforme", p.plateforme || "", false))
 const _g = (v => { if (!v || v === "") return ""; if (typeof v === "string") return v; try { return [...v].filter(Boolean).join(", ") } catch(e) { return "" } })(p.genre)
-mkRow("Genre", _g || "-", () => editField("genre", "Genre", _g, false))
-mkRow("Saisons", p.saisons != null ? String(p.saisons) : "-", () => editField("saisons", "Saisons", p.saisons, true))
+mkRow("Genre",      _g || "-",           () => editField("genre", "Genre", _g, false))
 
 const nRow = infoCol.createEl("div", {attr:{style:"display:flex;gap:10px;font-size:0.85em;align-items:center;"}})
-nRow.createEl("span", {attr:{style:"color:var(--text-muted);width:65px;flex-shrink:0;"}}).textContent = "Note"
+nRow.createEl("span", {attr:{style:"color:var(--text-muted);width:80px;flex-shrink:0;"}}).textContent = "Note"
 const sel = nRow.createEl("select", {attr:{style:"background:var(--background-secondary);border:1px solid var(--background-modifier-border);border-radius:6px;padding:2px 8px;color:var(--text-normal);font-size:0.88em;cursor:pointer;"}})
 sel.createEl("option", {attr:{value:""}}).textContent = "-"
 for (let i = 1; i <= 10; i++) {
@@ -319,6 +429,18 @@ for (let i = 1; i <= 10; i++) {
   if (p.note === i) opt.selected = true
 }
 sel.onchange = () => { const v = parseInt(sel.value); if (v) save("note", v) }
+
+// ── Titre VO ──
+if (p.titre_original) mkRow("Titre VO", p.titre_original, () => editField("titre_original", "Titre original (VO)", p.titre_original||"", false))
+// ── Saga & Navigation saisons ──
+if (p.saga || p.saison_precedente || p.saison_suivante) {
+  const _ol = lnk => { const _m=String(lnk||"").match(/\[\[([^\]|]+)/); if(_m) app.workspace.openLinkText(_m[1],"") }
+  const _sw = infoCol.createDiv(); _sw.style.cssText="background:var(--background-secondary);border-radius:8px;padding:7px 10px;margin-top:2px;"
+  if (p.saga) { const _sl=_sw.createEl("div"); _sl.style.cssText="font-size:0.72em;color:var(--text-muted);font-weight:600;text-transform:uppercase;letter-spacing:0.04em;margin-bottom:5px;"; _sl.textContent="🎯 SAGA : "+p.saga }
+  const _nr=_sw.createDiv(); _nr.style.cssText="display:flex;gap:6px;"
+  if (p.saison_precedente) { const _b=_nr.createEl("button",{attr:{style:"padding:3px 10px;border-radius:6px;border:1px solid var(--background-modifier-border);background:transparent;cursor:pointer;font-size:0.8em;color:var(--text-muted);font-family:inherit;"}}); _b.textContent="← Précédent"; _b.onclick=()=>_ol(p.saison_precedente) }
+  if (p.saison_suivante) { const _b=_nr.createEl("button",{attr:{style:"padding:3px 10px;border-radius:6px;border:1px solid var(--background-modifier-border);background:transparent;cursor:pointer;font-size:0.8em;color:var(--text-muted);font-family:inherit;"}}); _b.textContent="Suivant →"; _b.onclick=()=>_ol(p.saison_suivante) }
+}
 
 const nbSais = p.saisons || 1
 const saisonCovers = covers.slice(1)
@@ -349,16 +471,7 @@ const editCover = (idx, label, curC) => {
   if (idx > 0) {
     const del = btns.createEl("button", {attr:{style:"padding:6px 12px;border-radius:7px;border:1px solid #d20f39;color:#d20f39;background:transparent;cursor:pointer;font-size:0.85em;margin-right:auto;"}})
     del.textContent = "🗑 Supprimer"
-    del.onclick = async () => {
-      overlay.remove(); curC.splice(idx, 1); await save("covers", curC)
-      if (idx >= 1 && p.type === "série" && window.confirm(`Supprimer aussi la section "Saison ${idx}" du corps de la note ?`)) {
-        const _rc = await app.vault.read(file)
-        const _re = new RegExp(`\\n## Saison ${idx}\\n[\\s\\S]*?(?=\\n## |$)`)
-        const _rnc = _rc.replace(_re, '')
-        if (_rnc !== _rc) await app.vault.modify(file, _rnc)
-      }
-      new Notice("Cover supprimée.", 2000)
-    }
+    del.onclick = async () => { overlay.remove(); curC.splice(idx, 1); await save("covers", curC); new Notice("Cover supprimée.", 2000) }
   }
   const cancel = btns.createEl("button", {attr:{style:"padding:6px 14px;border-radius:7px;border:1px solid var(--background-modifier-border);background:var(--background-secondary);cursor:pointer;font-size:0.88em;color:var(--text-normal);"}})
   cancel.textContent = "Annuler"; cancel.onclick = () => overlay.remove()
@@ -368,18 +481,8 @@ const editCover = (idx, label, curC) => {
     const src = inp.value.trim()
     if (!src) return
     if (!src.startsWith("http") && !app.metadataCache.getFirstLinkpathDest(src, "")) { new Notice('"' + src + '" introuvable.', 4000); return }
-    const _isNew = idx >= 1 && p.type === "série" && !curC[idx]
     while (curC.length <= idx) curC.push("")
     curC[idx] = src; await save("covers", curC)
-    if (_isNew) {
-      const _ac = await app.vault.read(file)
-      if (!_ac.includes(`## Saison ${idx}`)) {
-        const _ns = `\n## Saison ${idx}\n\n**Épisodes :**\n**Synopsis :**\n`
-        const _im = _ac.search(/\n## (?!Saison )/)
-        const _anc = _im >= 0 ? _ac.slice(0, _im) + _ns + _ac.slice(_im) : _ac + _ns
-        await app.vault.modify(file, _anc)
-      }
-    }
     overlay.remove(); new Notice("Cover mise à jour !", 2000)
   }
   overlay.onclick = e => { if (e.target === overlay) overlay.remove() }
@@ -387,31 +490,12 @@ const editCover = (idx, label, curC) => {
   setTimeout(() => inp.focus(), 50)
 }
 
-const editBanniere = () => {
-  const overlay = document.body.createEl("div", {attr:{style:"position:fixed;inset:0;background:rgba(0,0,0,0.45);z-index:9998;display:flex;align-items:center;justify-content:center;"}})
-  const box = overlay.createEl("div", {attr:{style:"background:var(--background-primary);border-radius:14px;padding:22px 24px;min-width:300px;max-width:420px;width:90%;box-shadow:0 8px 40px rgba(0,0,0,0.35);"}})
-  box.createEl("h3", {attr:{style:"margin:0 0 14px;font-size:1em;font-weight:700;"}}).textContent = "🌅 Bannière"
-  const g = box.createEl("div", {attr:{style:"margin-bottom:12px;"}})
-  g.createEl("label", {attr:{style:"font-size:0.78em;color:var(--text-muted);display:block;margin-bottom:4px;font-weight:600;letter-spacing:0.04em;text-transform:uppercase;"}}).textContent = "URL ou fichier (image large)"
-  const inp = g.createEl("input", {attr:{type:"text",value:p.banniere||"",placeholder:"https://... ou nom-du-fichier.jpg",style:"width:100%;padding:7px 10px;border-radius:7px;border:1px solid var(--background-modifier-border);background:var(--background-secondary);color:var(--text-normal);font-size:0.9em;box-sizing:border-box;"}})
-  const btns = box.createEl("div", {attr:{style:"display:flex;gap:8px;justify-content:flex-end;margin-top:16px;"}})
-  const cancel = btns.createEl("button", {attr:{style:"padding:6px 14px;border-radius:7px;border:1px solid var(--background-modifier-border);background:var(--background-secondary);cursor:pointer;font-size:0.88em;color:var(--text-normal);"}})
-  cancel.textContent = "Annuler"; cancel.onclick = () => overlay.remove()
-  const ok = btns.createEl("button", {attr:{style:"padding:6px 14px;border-radius:7px;border:none;background:var(--interactive-accent);color:#fff;cursor:pointer;font-size:0.88em;font-weight:600;"}})
-  ok.textContent = "Enregistrer"
-  ok.onclick = async () => { const v = inp.value.trim(); await save("banniere", v); overlay.remove(); new Notice("Bannière mise à jour !", 2000) }
-  overlay.onclick = e => { if (e.target === overlay) overlay.remove() }
-  box.onkeydown = e => { if (e.key === "Enter") ok.click(); if (e.key === "Escape") overlay.remove() }
-  setTimeout(() => inp.focus(), 50)
-}
-
-
 const showSaisonsModal = () => {
   let _curSaisons = p.saisons || 1
   let _curCovers = Array.isArray(p.covers) ? [...p.covers] : []
   const overlay = document.body.createEl("div", {attr:{style:"position:fixed;inset:0;background:rgba(0,0,0,0.45);z-index:9998;display:flex;align-items:center;justify-content:center;"}})
   const box = overlay.createEl("div", {attr:{style:"background:var(--background-primary);border-radius:14px;padding:22px 24px;min-width:320px;max-width:480px;width:90%;box-shadow:0 8px 40px rgba(0,0,0,0.35);max-height:80vh;overflow-y:auto;"}})
-  box.createEl("h3", {attr:{style:"margin:0 0 16px;font-size:1em;font-weight:700;"}}).textContent = "🎬 Saisons"
+  box.createEl("h3", {attr:{style:"margin:0 0 16px;font-size:1em;font-weight:700;"}}).textContent = "📺 Saisons"
   const rowsDiv = box.createEl("div")
   const renderRows = () => {
     rowsDiv.empty()
@@ -438,12 +522,6 @@ const showSaisonsModal = () => {
         if (_curCovers.length > _i) { _curCovers.splice(_i, 1) } else { _curCovers[_i] = "" }
         while (_curCovers.length > 1 && _curCovers[_curCovers.length - 1] === "") _curCovers.pop()
         await app.fileManager.processFrontMatter(file, fm => { fm.saisons = _curSaisons; fm.covers = _curCovers })
-        if (window.confirm("Supprimer aussi la section \"Saison " + _i + "\" dans la note ?")) {
-          const _rc = await app.vault.read(file)
-          const _re = new RegExp("\\n## Saison " + _i + "\\b[\\s\\S]*?(?=\\n## |\\n---\\s*$|$)")
-          const _rnc = _rc.replace(_re, "")
-          if (_rnc !== _rc) await app.vault.modify(file, _rnc)
-        }
         new Notice("Saison " + _i + " supprimée.", 2000)
         renderRows()
       }
@@ -474,6 +552,25 @@ const showSaisonsModal = () => {
   overlay.onclick = e => { if (e.target === overlay) overlay.remove() }
   box.onkeydown = e => { if (e.key === "Escape") overlay.remove() }
 }
+
+const editBanniere = () => {
+  const overlay = document.body.createEl("div", {attr:{style:"position:fixed;inset:0;background:rgba(0,0,0,0.45);z-index:9998;display:flex;align-items:center;justify-content:center;"}})
+  const box = overlay.createEl("div", {attr:{style:"background:var(--background-primary);border-radius:14px;padding:22px 24px;min-width:300px;max-width:420px;width:90%;box-shadow:0 8px 40px rgba(0,0,0,0.35);"}})
+  box.createEl("h3", {attr:{style:"margin:0 0 14px;font-size:1em;font-weight:700;"}}).textContent = "🌅 Bannière"
+  const g = box.createEl("div", {attr:{style:"margin-bottom:12px;"}})
+  g.createEl("label", {attr:{style:"font-size:0.78em;color:var(--text-muted);display:block;margin-bottom:4px;font-weight:600;letter-spacing:0.04em;text-transform:uppercase;"}}).textContent = "URL ou fichier (image large)"
+  const inp = g.createEl("input", {attr:{type:"text",value:p.banniere||"",placeholder:"https://... ou nom-du-fichier.jpg",style:"width:100%;padding:7px 10px;border-radius:7px;border:1px solid var(--background-modifier-border);background:var(--background-secondary);color:var(--text-normal);font-size:0.9em;box-sizing:border-box;"}})
+  const btns = box.createEl("div", {attr:{style:"display:flex;gap:8px;justify-content:flex-end;margin-top:16px;"}})
+  const cancel = btns.createEl("button", {attr:{style:"padding:6px 14px;border-radius:7px;border:1px solid var(--background-modifier-border);background:var(--background-secondary);cursor:pointer;font-size:0.88em;color:var(--text-normal);"}})
+  cancel.textContent = "Annuler"; cancel.onclick = () => overlay.remove()
+  const ok = btns.createEl("button", {attr:{style:"padding:6px 14px;border-radius:7px;border:none;background:var(--interactive-accent);color:#fff;cursor:pointer;font-size:0.88em;font-weight:600;"}})
+  ok.textContent = "Enregistrer"
+  ok.onclick = async () => { const v = inp.value.trim(); await save("banniere", v); overlay.remove(); new Notice("Bannière mise à jour !", 2000) }
+  overlay.onclick = e => { if (e.target === overlay) overlay.remove() }
+  box.onkeydown = e => { if (e.key === "Enter") ok.click(); if (e.key === "Escape") overlay.remove() }
+  setTimeout(() => inp.focus(), 50)
+}
+
 const actBar = this.container.createEl("div", {attr:{style:"display:flex;gap:8px;flex-wrap:wrap;padding-top:2px;margin-bottom:12px;"}})
 const btnSess = actBar.createEl("button", {attr:{style:BTN}})
 btnSess.textContent = "➕ Session"
@@ -496,21 +593,22 @@ btnSess.onclick = () => {
     new Notice("Session ajoutée !", 2000)
   })
 }
+const btnSais = actBar.createEl("button", {attr:{style:BTN}})
+btnSais.textContent = "📺 Saisons"
+btnSais.onclick = () => showSaisonsModal()
 const btnBann = actBar.createEl("button", {attr:{style:BTN}})
 btnBann.textContent = "🌅 Bannière"
 btnBann.onclick = () => editBanniere()
-const btnSais = actBar.createEl("button", {attr:{style:BTN}})
-btnSais.textContent = "🎬 Saisons"
-btnSais.onclick = () => showSaisonsModal()
+const btnCover = actBar.createEl("button", {attr:{style:BTN}})
+btnCover.textContent = "🖼 Cover"
+btnCover.onclick = () => editCover(0, "Cover principale", Array.isArray(p.covers) ? [...p.covers] : [])
 const btnMod = actBar.createEl("button", {attr:{style:BTN}})
 btnMod.textContent = "✏ Modifier"
 btnMod.onclick = e => {
   const menu = new Menu()
-  menu.addItem(it => { it.setTitle("✏ Séries similaires"); it.onClick(() => editBodySection("Animés similaires", "similaires")) })
+  menu.addItem(it => { it.setTitle("✏ Séries similaires"); it.onClick(() => editBodySection("Séries similaires", "similaires")) })
   menu.addItem(it => { it.setTitle("✏ Impressions"); it.onClick(() => editBodySection("Impressions", "impressions")) })
   menu.addItem(it => { it.setTitle("✏ Ce que je retiens"); it.onClick(() => editBodySection("Ce que je retiens", "retiens")) })
-  menu.addSeparator()
-  menu.addItem(it => { it.setTitle("🌅 Bannière" + (p.banniere ? " ✓" : " (vide)")); it.onClick(() => editBanniere()) })
   menu.addSeparator()
   const curC = Array.isArray(p.covers) ? [...p.covers] : []
   menu.addItem(it => {
@@ -524,8 +622,8 @@ btnMod.onclick = e => {
 <%* for (let i = 1; i <= nbSaisons; i++) { -%>
 
 ## Saison <% i %>
-**Épisodes :**
-**Synopsis :**
+**Épisodes :** <% _sData[i]?.episodes || "" %>
+**Synopsis :** <% _sData[i]?.synopsis || "" %>
 
 <%* } -%>
 ## 🔗 Séries similaires
@@ -631,12 +729,12 @@ const TD = "padding:6px 8px;border-bottom:1px solid var(--background-modifier-bo
 let sessions = Array.isArray(p.sessions) ? [...p.sessions] : []
 const tableWrap = dv.container.createDiv()
 
-const totalAnime = () => sessions.reduce((t, s) => {
+const totalEp = () => sessions.reduce((t, s) => {
   const de = s["ep_debut"] ?? s["ep_début"] ?? null, a = s["ep_fin"] ?? de
   return t + (de != null && a != null ? a - de + 1 : Number(s.ep) || 0)
 }, 0)
 
-const renderAnime = () => {
+const renderTable = () => {
   tableWrap.empty()
   if (sessions.length === 0) {
     tableWrap.createEl("p", {attr:{style:"color:var(--text-muted);font-style:italic;font-size:0.88em;"}}).textContent = "Aucune session. Utilise le bouton ➕ Session ci-dessus."
@@ -656,7 +754,7 @@ const renderAnime = () => {
     const date = String(s.date || "").slice(0, 10)
     const de = s["ep_debut"] ?? s["ep_début"] ?? null, a = s["ep_fin"] ?? de
     const count = de != null && a != null ? a - de + 1 : (s.ep ?? "?")
-    const plage = de == null ? "-" : de === a ? "ep. " + de : "ep. " + de + " → " + a
+    const plage = de == null ? "-" : de === a ? "ep. " + de : "ep. " + de + " - " + a
     const tr = tbody.createEl("tr")
     tr.onmouseenter = () => tr.style.background = "var(--background-secondary)"
     tr.onmouseleave = () => tr.style.background = ""
@@ -676,7 +774,7 @@ const renderAnime = () => {
       if (!d2) return
       sessions[i] = {date:d2, saison:parseInt(s2)||1, ep_debut:parseInt(ep_deb)||null, ep_fin:parseInt(ep_fin||ep_deb)||null}
       await app.fileManager.processFrontMatter(file, fm => { fm.sessions = sessions })
-      new Notice("Session modifiée !", 2000); renderAnime()
+      new Notice("Session modifiée !", 2000); renderTable()
     })
     const delBtn = tdA.createEl("button", {attr:{style:ICOBTN + "color:#d20f39;border-color:rgba(210,15,57,0.3);"}})
     delBtn.textContent = "🗑"; delBtn.title = "Supprimer"
@@ -684,13 +782,13 @@ const renderAnime = () => {
       if (!window.confirm("Supprimer cette session ?")) return
       sessions = sessions.filter((_, idx) => idx !== i)
       await app.fileManager.processFrontMatter(file, fm => { fm.sessions = sessions })
-      new Notice("Session supprimée.", 2000); renderAnime()
+      new Notice("Session supprimée.", 2000); renderTable()
     }
   }
-  const tot = totalAnime()
+  const tot = totalEp()
   tableWrap.createEl("p", {attr:{style:"font-size:0.82em;color:var(--text-muted);margin-top:6px;"}}).innerHTML = "<strong>" + tot + "</strong> épisode" + (tot > 1 ? "s" : "") + " au total"
 }
-renderAnime()
+renderTable()
 ```
 
 ---

@@ -1,6 +1,6 @@
 # 📊 Lifetrack
 
-Un vault Obsidian pour suivre tes **finances**, **médias** (films, animés, séries, jeux, lectures) et **commandes**.
+Un vault Obsidian pour suivre tes **finances**, **médias** (films, animés, séries, jeux, lectures), **commandes** et ta **pratique sportive** (import Hevy).
 
 > Développé et maintenu par [Fram-sudo](https://github.com/Fram-sudo)
 
@@ -53,8 +53,10 @@ Les fichiers "système" que je maintiens : scripts d'import, guides, templates, 
 | Élément | Détail |
 |---------|--------|
 | 💰 **Tes transactions** | Le dossier `Transactions/` n'est jamais touché |
-| ⚙️ **Ta config bancaire** | `bank_configs.json` (tes banques configurées) est préservé |
+| 🏋️ **Tes séances de sport** | Le dossier `2 - Domaines/Sport/Data/` (imports Hevy) n'est jamais touché |
+| ⚙️ **Ta config bancaire** | `bank_configs.json` (tes banques configurées, tes règles de catégorisation) est préservé |
 | 📂 **Ta config script** | `script_config.json` (chemin de ton vault) est préservé |
+| 🔑 **Ta clé API TMDB** | `_Système/Config.md` n'est jamais écrasé |
 | 📝 **Tes notes personnelles** | Tout ce que tu as écrit toi-même dans le vault |
 | 🗂️ **Tes paramètres Finances** | Frontmatter de `Finances.md` : tes comptes, catégories, soldes initiaux, devise — jamais écrasés |
 
@@ -72,15 +74,26 @@ Rafraîchis les notes concernées dans Obsidian avec **Ctrl+R** (ou **Cmd+R** su
 lifetrack/
 ├── 0 - Inbox/                        ← Tes notes temporaires
 ├── 2 - Domaines/
-│   └── Finances/
-│       ├── 💰 Finances.md            ← Dashboard budgétaire
-│       └── Transactions/             ← Tes données JSON (ignorées par git)
+│   ├── Finances/
+│   │   ├── 💰 Finances.md            ← Dashboard budgétaire
+│   │   └── Transactions/             ← Tes données JSON (ignorées par git)
+│   ├── Sport/
+│   │   ├── 🏋️ Sport.md               ← Dashboard sport (import Hevy)
+│   │   └── Data/                     ← Tes séances JSON (ignorées par git)
+│   ├── Commandes/                    ← Suivi de commandes
+│   ├── Médias/                       ← Films, animés, séries, jeux, lectures
+│   └── Tâches.md                     ← Liste de tâches (utilisée par le Dashboard)
 ├── _Système/
+│   ├── Config.md                     ← Ta clé API TMDB (non versionnée)
 │   ├── Scripts/
-│   │   ├── import_releves.py         ← Script d'import bancaire
+│   │   ├── import_releves.py         ← Script d'import bancaire (SG/Revolut natifs + banques génériques)
+│   │   ├── parse_finances.py         ← Parsers PDF Société Générale / Revolut
+│   │   ├── create_fiches_medias.py   ← Import en masse de fiches médias (AniList/TMDB)
 │   │   ├── lancer_import.sh          ← Lanceur Linux/Mac
 │   │   ├── lancer_import.bat         ← Lanceur Windows
 │   │   ├── bank_configs.json         ← Ta config bancaire (non versionnée)
+│   │   ├── Hevy/                     ← Import des séances Hevy (CSV)
+│   │   ├── QuickAdd/                 ← Scripts QuickAdd (ouverture Dashboard, etc.)
 │   │   └── update.py                 ← Script de mise à jour
 │   ├── Templates/                    ← Templates de notes
 │   ├── MOC/                          ← Maps of Content
@@ -104,7 +117,7 @@ Le dashboard Finances (`2 - Domaines/Finances/💰 Finances.md`) lit tes fichier
 
 ### Importer des relevés bancaires
 
-Le script `import_releves.py` permet d'importer des relevés PDF de n'importe quelle banque.
+Le script `import_releves.py` reconnaît nativement les relevés **Société Générale** et **Revolut** (catégorisation automatique incluse), et permet aussi de configurer n'importe quelle autre banque via mapping de colonnes (bouton "⚙️ Gérer les banques").
 
 **Lancement :**
 - Windows : double-clique sur `_Système/Scripts/Import Relevés.bat`
@@ -129,6 +142,27 @@ La documentation complète est dans `_Système/TUTO - Import de relevés bancair
 Suivi de films, animés, séries, jeux vidéo, mangas et lectures via des templates de notes dédiés.
 
 Les MOC (Maps of Content) dans `_Système/MOC/` centralisent et affichent des statistiques pour chaque catégorie.
+
+### Auto-remplissage TMDB / AniList
+
+Les templates `TPL - Film.md`, `TPL - Série.md` et `TPL - Animé.md` peuvent remplir automatiquement titre, synopsis, affiche, genres, etc. à partir de TMDB (films/séries) et AniList (animés).
+
+1. Crée une clé API gratuite sur [themoviedb.org](https://www.themoviedb.org/settings/api) (section "API")
+2. Renseigne-la dans `_Système/Config.md` (`tmdb_api_key: "ta-clé-ici"`) — ce fichier n'est jamais écrasé par les mises à jour
+3. Crée une nouvelle fiche média (via QuickAdd) et renseigne l'ID TMDB ou AniList : les champs se remplissent seuls
+
+Pour importer plusieurs fiches d'un coup, utilise `_Système/Scripts/create_fiches_medias.py` (renseigne tes identifiants dans le script puis lance-le).
+
+---
+
+## 🏋️ Module Sport
+
+Le dashboard `2 - Domaines/Sport/🏋️ Sport.md` affiche tes séances de musculation importées depuis [Hevy](https://www.hevyapp.com/) : rythme d'entraînement, progression par exercice (records), historique des séances.
+
+**Import d'un export Hevy :**
+1. Dans l'app Hevy : Profil → ⚙️ Paramètres → Exporter les données (tu reçois un CSV par e-mail)
+2. Lance `_Système/Scripts/Hevy/lancer_hevy.sh` (Linux/Mac) ou le script Python directement (Windows)
+3. Sélectionne le CSV exporté — les séances sont fusionnées dans `2 - Domaines/Sport/Data/hevy_<année>.json` (jamais écrasé par les mises à jour)
 
 ---
 

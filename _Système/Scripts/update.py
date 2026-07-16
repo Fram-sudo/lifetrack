@@ -18,10 +18,16 @@ SYSTEM_FILES = [
     # Scripts
     "_Système/Scripts/update.py",
     "_Système/Scripts/import_releves.py",
+    "_Système/Scripts/parse_finances.py",
+    "_Système/Scripts/create_fiches_medias.py",
     "_Système/Scripts/lancer_import.sh",
     "_Système/Scripts/lancer_import.bat",
     "_Système/Scripts/Import Relevés.bat",
     "_Système/Scripts/Import Relevés.desktop",
+    "_Système/Scripts/QuickAdd/openDashboard.js",
+    "_Système/Scripts/Hevy/import_hevy.py",
+    "_Système/Scripts/Hevy/lancer_hevy.sh",
+    "_Système/Scripts/Hevy/Import Hevy.desktop",
     # Lanceurs racine
     "update.sh",
     "update.bat",
@@ -29,15 +35,15 @@ SYSTEM_FILES = [
     "_Système/TUTO - Import de relevés bancaires.md",
     "_Système/Guide Lifetrack.md",
     "Guide Lifetrack - Démarrage & Utilisation.md",
+    "README.md",
     # Dashboard
     "Dashboard.md",
     # MOC
     "_Système/MOC/🔍 Explorateur.md",
     "_Système/MOC/MOC - Commandes.md",
-    "_Système/MOC/MOC - Films & Animés.md",
+    "_Système/MOC/MOC - Films, Animés & Séries.md",
     "_Système/MOC/MOC - Jeux Vidéo.md",
     "_Système/MOC/MOC - Lectures.md",
-    "_Système/MOC/MOC - Séries.md",
     "_Système/MOC/📊 Statistiques.md",
     # Templates
     "_Système/Templates/TPL - Animé.md",
@@ -48,10 +54,23 @@ SYSTEM_FILES = [
     "_Système/Templates/TPL - Série.md",
     "_Système/Templates/TPL - Startup.md",
     "_Système/Templates/TPL - Suivi Commande.md",
+    "_Système/Templates/Mettre à jour la note.md",
+    "_Système/Templates/Mettre à jour la priorité.md",
+    "_Système/Templates/Mettre à jour le statut.md",
+    "_Système/Templates/Mettre à jour les affiches.md",
+    "_Système/Templates/Ajouter une session.md",
+    # Domaine Sport
+    "2 - Domaines/Sport/🏋️ Sport.md",
 ]
 
 # Fichier special : frontmatter utilisateur preserve, code JS mis a jour
 FINANCES_MD = "2 - Domaines/Finances/💰 Finances.md"
+
+# Fichiers NE JAMAIS ajouter a SYSTEM_FILES (donnees personnelles / config locale) :
+#   _Système/Config.md, _Système/Scripts/bank_configs.json, _Système/Scripts/script_config.json,
+#   2 - Domaines/Sport/Data/*, 2 - Domaines/Finances/Transactions/*
+# 🏋️ Sport.md n'a pas de frontmatter utilisateur (pas de config perso comme Finances.md,
+# juste type/tags/cssclasses) -> il est ecrase entierement comme un fichier systeme normal.
 
 
 def vault_root():
@@ -132,10 +151,13 @@ def main():
             print(f"  v  {path}")
             ok.append(path)
 
-    # Rendre les scripts shell executables
+    # Rendre les scripts shell/executables
     for sh in ["lancer_import.sh", "update.sh"]:
         make_executable(vault / "_Système/Scripts" / sh)
     make_executable(vault / "update.sh")
+    make_executable(vault / "_Système/Scripts/Hevy/lancer_hevy.sh")
+    make_executable(vault / "_Système/Scripts/Hevy/Import Hevy.desktop")
+    make_executable(vault / "_Système/Scripts/Import Relevés.desktop")
 
     # Finances.md (traitement special)
     content = fetch(FINANCES_MD)

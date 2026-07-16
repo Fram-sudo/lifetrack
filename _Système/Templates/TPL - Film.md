@@ -1,20 +1,98 @@
 <%*
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+//  TPL - Film  (intégration TMDB / IMDb)
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+// ── Statut ──────────────────────────────────────
 const statut = await tp.system.suggester(
   ["👁️ À voir", "▶️ En cours", "✅ Vu", "❌ Abandonné"],
   ["à voir", "en cours", "vu", "abandonné"]
-);
+)
 const _fi_sub = {"à voir":"À voir","en cours":"En cours","vu":"Vu","abandonné":"Abandonné"}[statut] || "À voir"
-await tp.file.move("2 - Domaines/Médias/Films/" + _fi_sub + "/" + tp.file.title)
 
+// ── Variables (valeurs par défaut = mode manuel) ─
+let titre = tp.file.title
+let titre_original = ""
+let tmdb_id = ""
+let réalisateur = ""
+let genres = []
+let covers = []
+let banniere = ""
+let année = ""
+let saga = ""
+let synopsis = ""
+
+// ── Clé TMDB depuis Config.md ───────────────────
+let _TMDB_KEY = ""
+try {
+  const _cf=app.vault.getAbstractFileByPath("_Système/Config.md")
+  if(_cf){const _cc=app.metadataCache.getFileCache(_cf); _TMDB_KEY=_cc?.frontmatter?.tmdb_api_key||""}
+} catch(_e){}
+
+// ── Source TMDB / IMDb (optionnel) ──────────────
+const _src = await tp.system.prompt("ID ou URL TMDB/IMDb ? (Entrée pour mode manuel)", "")
+
+if (_src && _src.trim()) {
+  if (!_TMDB_KEY) {
+    new Notice("⚠ Clé TMDB manquante - remplis _Système/Config.md",5000)
+  } else {
+    const _raw = _src.trim()
+    let _tmdbId = null
+    try {
+      const _imdbM = _raw.match(/tt\d+/)
+      if (_imdbM) {
+        const _fr=await fetch(`https://api.themoviedb.org/3/find/${_imdbM[0]}?api_key=${_TMDB_KEY}&external_source=imdb_id`)
+        const _fd=await _fr.json()
+        _tmdbId = _fd.movie_results?.[0]?.id || null
+      } else {
+        const _nm=_raw.match(/\/movie\/(\d+)/)||_raw.match(/^(\d+)$/)
+        if(_nm) _tmdbId=parseInt(_nm[1])
+      }
+      if (_tmdbId) {
+        const _dr=await fetch(`https://api.themoviedb.org/3/movie/${_tmdbId}?api_key=${_TMDB_KEY}&language=fr-FR&append_to_response=credits`)
+        const _mov=await _dr.json()
+
+        // Choix du titre
+        const _tO=[],_tV=[]
+        if(_mov.title&&_mov.title!==_mov.original_title){_tO.push("🇫🇷 "+_mov.title);_tV.push(_mov.title)}
+        if(_mov.original_title){_tO.push("🌐 "+_mov.original_title);_tV.push(_mov.original_title)}
+        _tO.push("✏ Saisir manuellement");_tV.push(null)
+        const _chosen=await tp.system.suggester(_tO,_tV)
+        titre=_chosen||await tp.system.prompt("Titre",_mov.title||tp.file.title)
+
+        tmdb_id=String(_tmdbId)
+        titre_original=_mov.original_title||""
+        genres=(_mov.genres||[]).map(g=>g.name)
+        année=_mov.release_date?_mov.release_date.slice(0,4):""
+        covers=_mov.poster_path?[`https://image.tmdb.org/t/p/original${_mov.poster_path}`]:[]
+        banniere=_mov.backdrop_path?`https://image.tmdb.org/t/p/original${_mov.backdrop_path}`:""
+        réalisateur=(_mov.credits?.crew||[]).find(c=>c.job==="Director")?.name||""
+        if(_mov.belongs_to_collection) saga=_mov.belongs_to_collection.name||""
+        synopsis = _mov.overview || ""
+
+        new Notice("✓ TMDB : "+titre,2000)
+      } else { new Notice("Film non trouvé sur TMDB",3000) }
+    } catch(_e){ new Notice("❌ TMDB : "+_e.message,5000) }
+  }
+}
+
+const _coversYaml = covers.length ? '['+covers.map(c=>`"${c}"`).join(',')+']' : '[]'
+const _genresYaml = genres.length ? '['+genres.map(g=>`"${g.replace(/"/g,"'")}"`).join(',')+']' : '[]'
+const _safeTitre = titre.replace(/[/\\:*?"<>|]/g,"")
+await tp.file.move("2 - Domaines/Médias/Films/" + _fi_sub + "/" + _safeTitre)
 -%>
 ---
 type: film
 created: <% tp.date.now("YYYY-MM-DD") %>
-titre: "<% tp.file.title %>"
-covers: []
-année:
-réalisateur: ""
-genre: []
+titre: "<% titre %>"
+titre_original: "<% titre_original %>"
+tmdb_id: <% tmdb_id %>
+covers: <% _coversYaml %>
+banniere: "<% banniere %>"
+année: <% année %>
+réalisateur: "<% réalisateur %>"
+genre: <% _genresYaml %>
+saga: "<% saga %>"
 statut: "<% statut %>"
 note:
 date_visionnage:
@@ -254,12 +332,32 @@ const MOVE_MAP = {"à voir":"2 - Domaines/Médias/Films/À voir","en cours":"2 -
   const _f = app.vault.getAbstractFileByPath(p.file.path)
   if (_f && _f.parent && _f.parent.path !== _t) setTimeout(() => { try { moveToFolder(_t) } catch(e) {} }, 500)
 })()
+// ── Auto-rename : fichier = titre ────────────────
+;(function(){
+  if(!p?.titre||!p?.file) return
+  const _safe=p.titre.replace(/[/\\:*?"<>|]/g,"")
+  const _cur=p.file.name.replace(/\.md$/,"")
+  if(_cur===_safe) return
+  const _f=app.vault.getAbstractFileByPath(p.file.path)
+  if(!_f) return
+  setTimeout(async()=>{
+    try{ await app.fileManager.renameFile(_f,(p.file.folder?p.file.folder+"/":"")+_safe+".md") }catch(_e){}
+  },1200)
+})()
 const STATUS_COLOR = {"a voir":"#8839ef","en cours":"#1e66f5","vu":"#40a02b","abandonne":"#d20f39"}
 const STATUS_LIST  = ["à voir","en cours","vu","abandonné"]
 const STATUS_KEY   = {"à voir":"a voir","en cours":"en cours","vu":"vu","abandonné":"abandonne"}
 const sColor = STATUS_COLOR[STATUS_KEY[p.statut]] || "var(--text-muted)"
 
 const isMobile = window.innerWidth < 700
+
+// ── Bannière ──────────────────────────────────────────
+const bannSrc = p.banniere ? (p.banniere.startsWith("http") ? p.banniere : (() => { const bf = app.metadataCache.getFirstLinkpathDest(p.banniere, ""); return bf ? app.vault.adapter.getResourcePath(bf.path) : null })()) : null
+if (bannSrc) {
+  const bannWrap = this.container.createEl("div", {attr:{style:"margin-bottom:14px;border-radius:10px;overflow:hidden;"}})
+  bannWrap.createEl("img", {attr:{src:bannSrc, style:"width:100%;max-height:200px;object-fit:cover;display:block;"}})
+}
+
 const top = this.container.createEl("div", {attr:{style:`display:flex;flex-direction:${isMobile?"column":"row"};gap:20px;margin-bottom:16px;align-items:${isMobile?"center":"flex-start"};`}})
 const mainSrc = getSrc(covers[0])
 if (mainSrc) {
@@ -299,6 +397,8 @@ mkRow("Année",       p.année != null ? String(p.année) : "-",  () => editFiel
 mkRow("Réalisateur", p.réalisateur || "-",  () => editField("réalisateur", "Réalisateur", p.réalisateur || "", false))
 const _g = (v => { if (!v || v === "") return ""; if (typeof v === "string") return v; try { return [...v].filter(Boolean).join(", ") } catch(e) { return "" } })(p.genre)
 mkRow("Genre", _g || "-", () => editField("genre", "Genre", _g, false))
+if (p.titre_original) mkRow("Titre VO", p.titre_original, () => editField("titre_original", "Titre original (VO)", p.titre_original||"", false))
+if (p.saga) mkRow("Saga", p.saga, () => editField("saga", "Saga", p.saga||"", false))
 const fmtDateFr = iso => {
   if (!iso) return "-"
   const s = String(iso).slice(0, 10)
@@ -324,7 +424,28 @@ for (let i = 1; i <= 10; i++) {
 }
 sel.onchange = () => { const v = parseInt(sel.value); if (v) save("note", v) }
 
+const editBanniere = () => {
+  const overlay = document.body.createEl("div", {attr:{style:"position:fixed;inset:0;background:rgba(0,0,0,0.45);z-index:9998;display:flex;align-items:center;justify-content:center;"}})
+  const box = overlay.createEl("div", {attr:{style:"background:var(--background-primary);border-radius:14px;padding:22px 24px;min-width:300px;max-width:420px;width:90%;box-shadow:0 8px 40px rgba(0,0,0,0.35);"}})
+  box.createEl("h3", {attr:{style:"margin:0 0 14px;font-size:1em;font-weight:700;"}}).textContent = "🌅 Bannière"
+  const g = box.createEl("div", {attr:{style:"margin-bottom:12px;"}})
+  g.createEl("label", {attr:{style:"font-size:0.78em;color:var(--text-muted);display:block;margin-bottom:4px;font-weight:600;letter-spacing:0.04em;text-transform:uppercase;"}}).textContent = "URL ou fichier (image large)"
+  const inp = g.createEl("input", {attr:{type:"text",value:p.banniere||"",placeholder:"https://... ou nom-du-fichier.jpg",style:"width:100%;padding:7px 10px;border-radius:7px;border:1px solid var(--background-modifier-border);background:var(--background-secondary);color:var(--text-normal);font-size:0.9em;box-sizing:border-box;"}})
+  const btns = box.createEl("div", {attr:{style:"display:flex;gap:8px;justify-content:flex-end;margin-top:16px;"}})
+  const cancel = btns.createEl("button", {attr:{style:"padding:6px 14px;border-radius:7px;border:1px solid var(--background-modifier-border);background:var(--background-secondary);cursor:pointer;font-size:0.88em;color:var(--text-normal);"}})
+  cancel.textContent = "Annuler"; cancel.onclick = () => overlay.remove()
+  const ok = btns.createEl("button", {attr:{style:"padding:6px 14px;border-radius:7px;border:none;background:var(--interactive-accent);color:#fff;cursor:pointer;font-size:0.88em;font-weight:600;"}})
+  ok.textContent = "Enregistrer"
+  ok.onclick = async () => { const v = inp.value.trim(); await save("banniere", v); overlay.remove(); new Notice("Bannière mise à jour !", 2000) }
+  overlay.onclick = e => { if (e.target === overlay) overlay.remove() }
+  box.onkeydown = e => { if (e.key === "Enter") ok.click(); if (e.key === "Escape") overlay.remove() }
+  setTimeout(() => inp.focus(), 50)
+}
+
 const actBar = this.container.createEl("div", {attr:{style:"display:flex;gap:8px;flex-wrap:wrap;padding-top:2px;margin-bottom:12px;"}})
+const btnBann = actBar.createEl("button", {attr:{style:BTN}})
+btnBann.textContent = "🌅 Bannière"
+btnBann.onclick = () => editBanniere()
 const btnMod = actBar.createEl("button", {attr:{style:BTN}})
 btnMod.textContent = "✏ Modifier"
 btnMod.onclick = e => {
@@ -354,7 +475,7 @@ btnMod.onclick = e => {
 ```
 
 ## 🎬 Synopsis
-
+<% synopsis %>
 
 ## 💭 Mon avis
 

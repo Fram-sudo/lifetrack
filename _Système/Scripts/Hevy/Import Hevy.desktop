@@ -1,0 +1,10 @@
+#!/usr/bin/env xdg-open
+[Desktop Entry]
+Version=1.0
+Type=Application
+Name=Import Hevy
+Comment=Importer un export CSV Hevy dans Obsidian Sport
+Exec=bash -c "cd '/home/guillaume/Documents/Obsidian/Lifetrack/_Système/Scripts/Hevy' && python3 import_hevy.py"
+Icon=applications-sports
+Terminal=false
+Categories=Sports;Health;

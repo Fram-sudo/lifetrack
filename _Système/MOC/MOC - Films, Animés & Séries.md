@@ -1,11 +1,15 @@
 ---
 type: moc
-tags: [moc, médias]
-cssclasses: [media-page]
+tags:
+  - moc
+  - médias
+cssclasses:
+  - media-page
 obsidianUIMode: preview
+aliases:
 ---
 
-# 🎬 Films & Animés
+# 🎬 Films, Animés & Séries
 
 ```dataviewjs
 const TYPES_CFG = {
@@ -13,6 +17,8 @@ const TYPES_CFG = {
     statuts_finis:["vu"], statut_voir:"à voir", label_voir:"À voir", label_finis:"Vus" },
   "film":  { icon:"🎬", label:"Film",  color:"#c07850", bg:"rgba(192,120,80,0.12)",
     statuts_finis:["vu"], statut_voir:"à voir", label_voir:"À voir", label_finis:"Vus" },
+  "série": { icon:"📺", label:"Série", color:"#7b6cb8", bg:"rgba(123,108,184,0.12)",
+    statuts_finis:["vu"], statut_voir:"à voir", label_voir:"À voir", label_finis:"Vues" },
 }
 
 // Toggle state (shared between blocks via window)
@@ -23,7 +29,8 @@ const cfg = () => TYPES_CFG[activeType()]
 
 const allAnimés = dv.pages('"2 - Domaines/Médias"').where(p => p.type === "animé").array()
 const allFilms  = dv.pages('"2 - Domaines/Médias"').where(p => p.type === "film").array()
-const getPages  = () => activeType() === "animé" ? allAnimés : allFilms
+const allSéries = dv.pages('"2 - Domaines/Médias"').where(p => p.type === "série").array()
+const getPages  = () => activeType() === "animé" ? allAnimés : activeType() === "film" ? allFilms : allSéries
 
 // --- STATS BAR ---
 const barWrap = dv.container.createDiv()
@@ -68,19 +75,65 @@ const TYPES_CFG = {
   "film":  { type:"film",  icon:"🎬", label:"Film",  color:"#c07850", bg:"rgba(192,120,80,0.12)",
     statuts_finis:["vu"], statut_voir:"à voir", label_voir:"À voir", label_finis:"Vus",
     placeholder:"🔍 Rechercher un film…" },
+  "série": { type:"série", icon:"📺", label:"Série", color:"#7b6cb8", bg:"rgba(123,108,184,0.12)",
+    statuts_finis:["vu"], statut_voir:"à voir", label_voir:"À voir", label_finis:"Vues",
+    placeholder:"🔍 Rechercher une série…" },
 }
 
 if (!window._mocFilmsAnimes) window._mocFilmsAnimes = { type: "animé" }
 
 const allAnimés = dv.pages('"2 - Domaines/Médias"').where(p => p.type === "animé").array()
 const allFilms  = dv.pages('"2 - Domaines/Médias"').where(p => p.type === "film").array()
+const allSéries = dv.pages('"2 - Domaines/Médias"').where(p => p.type === "série").array()
 
 let activeFilter = "tout"
 let activeSearch  = ""
+let activeLetter  = ""
+let sortMode      = "natural"
+let sortDir       = "desc"
 
 const activeType = () => window._mocFilmsAnimes.type
 const cfg        = () => TYPES_CFG[activeType()]
-const getPages   = () => activeType() === "animé" ? allAnimés : allFilms
+const getPages   = () => activeType() === "animé" ? allAnimés : activeType() === "film" ? allFilms : allSéries
+
+// ── Tri alphabétique ──────────────────────────────
+const sortAlpha = (arr) => {
+  return [...arr].sort((a, b) => {
+    const ka = (a.saga || a.titre || a.file.name).toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g,"")
+    const kb = (b.saga || b.titre || b.file.name).toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g,"")
+    const c = ka.localeCompare(kb, 'fr')
+    if (c !== 0) return c
+    return (a.saga_num || a.année || 0) - (b.saga_num || b.année || 0)
+  })
+}
+
+// ── Lettre de tri d'une entrée ───────────────────
+const getAlphaKey = (p) => {
+  const raw = (p.saga || p.titre || p.file.name || "").trim().normalize("NFD").replace(/[̀-ͯ]/g,"")
+  // Ignorer les articles courants
+  const stripped = raw.replace(/^(the |a |an |le |la |les |l'|un |une |des )\s*/i,"")
+  const ch = (stripped[0] || raw[0] || "").toUpperCase()
+  return /[A-Z]/.test(ch) ? ch : "#"
+}
+
+// ── Tri naturel (saga → saga_num → année pour animés ; année pour le reste) ──
+const sortNatural = arr => {
+  if (activeType() === "animé") return [...arr].sort((a,b) => {
+    const ka = (a.saga||a.titre||"").normalize("NFD").replace(/[̀-ͯ]/g,"")
+    const kb = (b.saga||b.titre||"").normalize("NFD").replace(/[̀-ͯ]/g,"")
+    const sa = sortDir === "desc" ? kb.localeCompare(ka,"fr") : ka.localeCompare(kb,"fr")
+    if (sa !== 0) return sa
+    const nd = ((a.saga_num||9999)-(b.saga_num||9999)) || ((a.année||0)-(b.année||0))
+    return sortDir === "desc" ? -nd : nd
+  })
+  return [...arr].sort((a,b) => sortDir === "desc" ? (b.année||0)-(a.année||0) : (a.année||0)-(b.année||0))
+}
+
+// ── Toutes les lettres présentes dans un tableau ──
+const getLettersIn = (arr) => {
+  const s = new Set(arr.map(getAlphaKey))
+  return ["A","B","C","D","E","F","G","H","I","J","K","L","M","N","O","P","Q","R","S","T","U","V","W","X","Y","Z","#"].filter(l => s.has(l))
+}
 
 const wrap = dv.container.createDiv()
 
@@ -98,10 +151,13 @@ for (const [key, c] of Object.entries(TYPES_CFG)) {
     window._mocFilmsAnimes.type = key
     activeFilter = "tout"
     activeSearch  = ""
+    activeLetter  = ""
     searchInput.value = ""
     searchInput.placeholder = cfg().placeholder
     refreshToggle()
     refreshTabs()
+    refreshAlphaBar()
+    refreshSortToggle()
     renderGrid()
     if (window._mocFilmsAnimes._renderBar) window._mocFilmsAnimes._renderBar()
   }
@@ -124,8 +180,80 @@ refreshToggle()
 const searchInput = wrap.createEl("input")
 searchInput.type = "search"
 searchInput.placeholder = cfg().placeholder
-searchInput.style.cssText = "width:100%;padding:8px 13px;border-radius:8px;border:1px solid var(--background-modifier-border);background:var(--background-secondary);color:var(--text-normal);font-size:0.9em;box-sizing:border-box;margin-bottom:14px;font-family:inherit;outline:none;"
-searchInput.oninput = () => { activeSearch = searchInput.value.toLowerCase().trim(); renderGrid() }
+searchInput.style.cssText = "width:100%;padding:8px 13px;border-radius:8px;border:1px solid var(--background-modifier-border);background:var(--background-secondary);color:var(--text-normal);font-size:0.9em;box-sizing:border-box;margin-bottom:10px;font-family:inherit;outline:none;"
+searchInput.oninput = () => { activeSearch = searchInput.value.toLowerCase().trim(); activeLetter = ""; refreshAlphaBar(); renderGrid() }
+
+// --- SORT TOGGLE ---
+const sortRow = wrap.createDiv()
+sortRow.style.cssText = "display:flex;gap:4px;align-items:center;margin-bottom:10px;"
+const sortLbl = sortRow.createEl("span"); sortLbl.style.cssText = "font-size:0.78em;color:var(--text-muted);margin-right:2px;"; sortLbl.textContent = "Tri :"
+const sortBtns = {}
+const refreshSortToggle = () => {
+  const base = activeType() === "animé" ? "Saga" : "Date"
+  if (sortBtns.natural) sortBtns.natural.textContent = base + (sortMode === "natural" ? (sortDir === "desc" ? " ↓" : " ↑") : "")
+  for (const [k,b] of Object.entries(sortBtns)) {
+    const on = k === sortMode
+    b.style.cssText = `padding:3px 11px;border-radius:5px;border:1px solid ${on?"var(--interactive-accent)":"var(--background-modifier-border)"};background:${on?"var(--interactive-accent)":"var(--background-secondary)"};color:${on?"#fff":"var(--text-muted)"};cursor:pointer;font-size:0.8em;font-weight:700;font-family:inherit;transition:background 0.1s;`
+  }
+}
+for (const [k, lbl] of [["natural","Date"],["alpha","A-Z"]]) {
+  const btn = sortRow.createEl("button"); btn.textContent = lbl; sortBtns[k] = btn
+  btn.onclick = () => {
+    if (k === "natural" && sortMode === "natural") sortDir = sortDir === "desc" ? "asc" : "desc"
+    else sortMode = k
+    refreshSortToggle(); renderGrid()
+  }
+}
+refreshSortToggle()
+
+// --- BARRE ALPHABET ──────────────────────────────
+const alphaBarWrap = wrap.createDiv()
+alphaBarWrap.style.cssText = "margin-bottom:14px;"
+const alphaBar = alphaBarWrap.createDiv()
+alphaBar.style.cssText = "display:flex;flex-wrap:wrap;gap:3px;"
+const LETTERS = "ABCDEFGHIJKLMNOPQRSTUVWXYZ#".split("")
+const alphaBtns = {}
+
+const refreshAlphaBar = () => {
+  const pages = getPages()
+  const sf = activeSearch ? pages.filter(p => (p.titre || p.file.name).toLowerCase().includes(activeSearch)) : pages
+  let filtered = sf
+  if (activeFilter !== "tout") {
+    const c = cfg()
+    if      (activeFilter === "en_cours") filtered = sf.filter(p => p.statut === "en cours")
+    else if (activeFilter === "termines") filtered = sf.filter(p => c.statuts_finis.includes(p.statut))
+    else if (activeFilter === "a_voir")   filtered = sf.filter(p => p.statut === c.statut_voir)
+    else if (activeFilter === "notes")    filtered = sf.filter(p => p.note)
+    else if (activeFilter === "abandonne") filtered = sf.filter(p => p.statut === "abandonné")
+  }
+  const available = new Set(filtered.map(getAlphaKey))
+  for (const l of LETTERS) {
+    const btn = alphaBtns[l]
+    if (!btn) continue
+    const active = activeLetter === l
+    const has = available.has(l)
+    btn.disabled = !has
+    btn.style.cssText = `min-width:24px;padding:3px 5px;border-radius:5px;border:1px solid ${active ? "var(--interactive-accent)" : has ? "var(--background-modifier-border)" : "transparent"};background:${active ? "var(--interactive-accent)" : "transparent"};color:${active ? "#fff" : has ? "var(--text-normal)" : "var(--text-faint)"};cursor:${has ? "pointer" : "default"};font-size:0.78em;font-weight:${active||has ? "700" : "400"};font-family:inherit;transition:background 0.1s;text-align:center;`
+  }
+}
+
+for (const l of LETTERS) {
+  const btn = alphaBar.createEl("button")
+  btn.textContent = l
+  alphaBtns[l] = btn
+  btn.onclick = () => {
+    if (btn.disabled) return
+    activeLetter = activeLetter === l ? "" : l
+    refreshAlphaBar()
+    renderGrid()
+    // Scroll vers l'ancre si elle existe
+    setTimeout(() => {
+      const anchor = document.getElementById("alpha-anchor-" + l)
+      if (anchor) anchor.scrollIntoView({behavior:"smooth", block:"start"})
+    }, 80)
+  }
+}
+refreshAlphaBar()
 
 // --- FILTERS ---
 const FILTERS = [
@@ -149,13 +277,54 @@ for (const f of FILTERS) {
       : "padding:5px 14px;border-radius:20px;border:1px solid var(--background-modifier-border);background:var(--background-secondary);color:var(--text-muted);cursor:pointer;font-size:0.84em;font-family:inherit;"
     btn.textContent = f.label()
   }
-  btn.onclick = () => { activeFilter = f.key; refreshTabs(); renderGrid() }
+  btn.onclick = () => { activeFilter = f.key; activeLetter = ""; refreshTabs(); refreshAlphaBar(); renderGrid() }
   refreshBtn(); tabRefs.push(refreshBtn)
 }
 
 // --- GRID ---
 const contentDiv = wrap.createDiv()
-const GRID_STYLE = "display:grid;grid-template-columns:repeat(auto-fill,minmax(145px,1fr));gap:14px;margin:12px 0 28px;"
+const GRID_STYLE = "display:grid;grid-template-columns:repeat(auto-fill,minmax(145px,1fr));gap:14px;margin:4px 0 28px;"
+
+// ── Séparateur alphabétique ───────────────────────
+const makeSep = (letter) => {
+  const sep = contentDiv.createDiv()
+  sep.id = "alpha-anchor-" + letter
+  sep.style.cssText = "display:flex;align-items:center;gap:10px;margin:16px 0 6px;scroll-margin-top:60px;"
+  const lbl = sep.createEl("span")
+  lbl.style.cssText = "font-size:1em;font-weight:800;color:var(--text-muted);min-width:20px;"
+  lbl.textContent = letter
+  const line = sep.createEl("div")
+  line.style.cssText = "flex:1;height:1px;background:var(--background-modifier-border);"
+  return sep
+}
+
+// ── Rendu en grille avec séparateurs ─────────────
+const renderWithSeparators = (arr) => {
+  if (!arr.length) return
+  const sorted = sortMode === "alpha" ? sortAlpha(arr) : sortNatural(arr)
+  // Si lettre active, filtrer
+  const toRender = activeLetter ? sorted.filter(p => getAlphaKey(p) === activeLetter) : sorted
+  if (!toRender.length) return
+  // Séparateurs uniquement en mode A-Z, plusieurs lettres et assez de cartes
+  const letters = getLettersIn(toRender)
+  const useSeps = sortMode === "alpha" && letters.length > 1 && toRender.length >= 8
+  if (!useSeps) {
+    const grid = contentDiv.createDiv(); grid.style.cssText = GRID_STYLE
+    for (const p of toRender) makeCard(grid, p)
+    return
+  }
+  let curLetter = null
+  let curGrid = null
+  for (const p of toRender) {
+    const l = getAlphaKey(p)
+    if (l !== curLetter) {
+      curLetter = l
+      makeSep(l)
+      curGrid = contentDiv.createDiv(); curGrid.style.cssText = GRID_STYLE
+    }
+    makeCard(curGrid, p)
+  }
+}
 
 function showPlaceholder(box) {
   const c = cfg()
@@ -206,8 +375,18 @@ function makeCard(grid, page) {
   }
   const titleEl = info.createDiv(); titleEl.style.cssText = "font-weight:700;font-size:0.85em;color:var(--text-normal);overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;line-height:1.35;"; titleEl.textContent = page.titre || page.file.name
   let sub = ""
-  if (activeType() === "animé" && page.saisons) sub = page.saisons > 1 ? `${page.saisons} saisons` : `${page.saisons} saison`
-  else if (activeType() === "film" && page.année) sub = String(page.année)
+  if (activeType() === "animé") {
+    if (page.saga) {
+      const _cnt = allAnimés.filter(p => p.saga === page.saga).length
+      if (_cnt >= 1) sub = _cnt > 1 ? `${_cnt} saisons` : `${_cnt} saison`
+    }
+  } else if (activeType() === "film" && page.année) sub = String(page.année)
+  else if (activeType() === "série") {
+    const parts = []
+    if (page.saisons) parts.push(page.saisons > 1 ? `${page.saisons} saisons` : `${page.saisons} saison`)
+    if (page.plateforme) parts.push(page.plateforme)
+    sub = parts.join(" · ")
+  }
   if (sub) { const subEl = info.createDiv(); subEl.style.cssText = "font-size:0.73em;color:var(--text-muted);"; subEl.textContent = sub }
 }
 
@@ -225,30 +404,32 @@ const renderGrid = () => {
   else if (activeFilter === "notes")    filtered = sf.filter(p => p.note).sort((a,b) => (b.note||0)-(a.note||0))
   else filtered = sf
 
+  // Filtre lettre active (en dehors du mode "notes" qui a son propre tri)
+  if (activeLetter && activeFilter !== "notes") {
+    filtered = filtered.filter(p => getAlphaKey(p) === activeLetter)
+  }
+
   if (activeFilter === "tout") {
-    const enCoursList = sf.filter(p => p.statut === "en cours").sort((a,b) => b.file.mtime - a.file.mtime)
+    const _lf = arr => activeLetter ? arr.filter(p => getAlphaKey(p) === activeLetter) : arr
+    const enCoursList = _lf(sf.filter(p => p.statut === "en cours"))
     if (enCoursList.length) {
       contentDiv.createEl("h2").textContent = "🔥 En cours"
-      const grid = contentDiv.createDiv(); grid.style.cssText = GRID_STYLE
-      for (const p of enCoursList) makeCard(grid, p)
+      renderWithSeparators(enCoursList)
     }
-    const aVoirList = sf.filter(p => p.statut === c.statut_voir)
+    const aVoirList = _lf(sf.filter(p => p.statut === c.statut_voir))
     if (aVoirList.length) {
       contentDiv.createEl("h2").textContent = `◯ ${c.label_voir}`
-      const grid = contentDiv.createDiv(); grid.style.cssText = GRID_STYLE
-      for (const p of aVoirList) makeCard(grid, p)
+      renderWithSeparators(aVoirList)
     }
-    const finisList = sf.filter(p => c.statuts_finis.includes(p.statut)).sort((a,b) => b.file.mtime - a.file.mtime)
+    const finisList = _lf(sf.filter(p => c.statuts_finis.includes(p.statut)))
     if (finisList.length) {
       contentDiv.createEl("h2").textContent = `✓ ${c.label_finis}`
-      const grid = contentDiv.createDiv(); grid.style.cssText = GRID_STYLE
-      for (const p of finisList) makeCard(grid, p)
+      renderWithSeparators(finisList)
     }
-    const abandList = sf.filter(p => p.statut === "abandonné")
+    const abandList = _lf(sf.filter(p => p.statut === "abandonné"))
     if (abandList.length) {
       contentDiv.createEl("h2").textContent = "✕ Abandonnés"
-      const grid = contentDiv.createDiv(); grid.style.cssText = GRID_STYLE
-      for (const p of abandList) makeCard(grid, p)
+      renderWithSeparators(abandList)
     }
     if (!sf.length) contentDiv.createEl("p", {attr:{style:"color:var(--text-muted);font-style:italic;font-size:0.88em;"}}).textContent = `Aucun ${c.label.toLowerCase()} dans le vault.`
     return
@@ -258,8 +439,12 @@ const renderGrid = () => {
     contentDiv.createEl("p", {attr:{style:"color:var(--text-muted);font-style:italic;font-size:0.88em;"}}).textContent = "Aucun contenu dans cette catégorie."
     return
   }
-  const grid = contentDiv.createDiv(); grid.style.cssText = GRID_STYLE
-  for (const p of filtered) makeCard(grid, p)
+  if (activeFilter === "notes") {
+    const grid = contentDiv.createDiv(); grid.style.cssText = GRID_STYLE
+    for (const p of filtered) makeCard(grid, p)
+  } else {
+    renderWithSeparators(filtered)
+  }
 }
 
 renderGrid()

@@ -17,11 +17,12 @@
 9. [Romans et Livres](#9--romans-et-livres)
 10. [Jeux Vidéo](#10--jeux-vidéo)
 11. [Commandes](#11--commandes)
-12. [Finances](#12--finances)
-13. [Statistiques](#13--statistiques)
-14. [Explorateur](#14--explorateur)
-15. [Raccourcis clavier](#15--raccourcis-clavier)
-16. [Problèmes courants](#16--problèmes-courants)
+12. [Sport](#12--sport)
+13. [Finances](#13--finances)
+14. [Statistiques](#14--statistiques)
+15. [Explorateur](#15--explorateur)
+16. [Raccourcis clavier](#16--raccourcis-clavier)
+17. [Problèmes courants](#17--problèmes-courants)
 
 ---
 
@@ -155,9 +156,12 @@ Lifetrack/
 │   │   ├── Romans & Livres/ (mêmes sous-dossiers)
 │   │   └── Jeux Vidéo/    (sous-dossiers : Backlog / En cours / Terminé / Abandonné)
 │   ├── Commandes/
+│   ├── Sport/
+│   │   └── Data/          (séances Hevy en JSON, ne pas modifier manuellement)
 │   └── Finances/
 │       └── Transactions/  (fichiers JSON auto-générés, ne pas modifier manuellement)
 └── _Système/              ← NE PAS TOUCHER (templates, scripts, configs)
+    └── Config.md          (ta clé API TMDB - jamais écrasée par les mises à jour)
 ```
 
 > Quand tu changes le statut d'une fiche (ex : "À voir" → "En cours"), la note se déplace **automatiquement** dans le bon sous-dossier.
@@ -189,6 +193,8 @@ Une fois la fiche ouverte, clique sur **✏ Modifier** pour renseigner :
 - **Genre** : Science-fiction
 - **Réalisateur** : Christopher Nolan
 - **Note** : laisse vide pour l'instant (tu la mettras après avoir regardé)
+
+> **Astuce - auto-remplissage TMDB :** si tu as renseigné ta clé API TMDB dans `_Système/Config.md` (clé gratuite sur themoviedb.org), tu peux à la place renseigner l'**ID TMDB** du film (visible dans l'URL de sa fiche sur themoviedb.org) - titre, cover, genre et réalisateur se remplissent automatiquement. Même principe pour les animés avec un ID **AniList**.
 
 ### Marquer comme vu
 
@@ -344,7 +350,32 @@ La commande apparaît dans le **MOC Commandes** avec un code couleur selon son s
 
 ---
 
-## 12 - Finances
+## 12 - Sport
+
+Le dashboard `2 - Domaines/Sport/🏋️ Sport.md` suit tes séances de musculation importées depuis l'application [Hevy](https://www.hevyapp.com/).
+
+### Importer un export Hevy
+
+Exemple : tu viens de faire 3 mois de séances sur Hevy et veux les voir dans Lifetrack.
+
+1. Dans l'app Hevy : **Profil → ⚙️ Paramètres → Exporter les données** - tu reçois un e-mail avec un CSV
+2. Enregistre le fichier CSV quelque part sur ton ordinateur
+3. Lance le script d'import :
+   - **Linux** : double-clique sur `_Système/Scripts/Hevy/Import Hevy.desktop` (ou `lancer_hevy.sh`)
+   - **Windows/macOS** : `cd` vers `_Système/Scripts/Hevy/` puis `python3 import_hevy.py`
+4. Clique sur **📂 Choisir le fichier CSV**, sélectionne ton export, puis **⬆️ Importer**
+
+Tes séances sont fusionnées dans `2 - Domaines/Sport/Data/hevy_<année>.json`. Réimporter un export qui se chevauche avec des données déjà présentes ne crée pas de doublons.
+
+### Lire le dashboard Sport
+
+- **📊 Rythme** - histogramme du nombre de séances par semaine (16 dernières semaines), avec streak (semaines consécutives)
+- **📈 Progression** - sélectionne un exercice (ex : "Développé couché") pour voir la courbe de poids soulevé au fil du temps, avec ton record personnel repéré
+- **📋 Séances** - liste détaillée de tes dernières séances : exercices, séries, poids, répétitions
+
+---
+
+## 13 - Finances
 
 ### Premier démarrage - configurer un compte
 
@@ -441,6 +472,8 @@ Quand tu retournes un article et reçois un avoir, n'enregistre pas ça comme un
 
 Pour gagner du temps, tu peux importer directement tes relevés PDF au lieu de tout saisir manuellement.
 
+Le script reconnaît nativement les relevés **Société Générale** et **Revolut**, avec catégorisation automatique déjà configurée (Alimentation, Transport, Abonnements, Salaire…). Pour toute autre banque, tu peux configurer manuellement le format de tes relevés (voir "Configurer ta banque" plus bas).
+
 **Prérequis :** Python 3 installé. Les dépendances (`ttkbootstrap`, `pdfplumber`) sont installées automatiquement au premier lancement.
 
 **Lancement :**
@@ -497,7 +530,7 @@ Le bouton 🙈 masque tous les montants. Pratique si tu utilises Lifetrack en pu
 
 ---
 
-## 13 - Statistiques
+## 14 - Statistiques
 
 La page **📊 Statistiques** (accessible depuis le Dashboard) centralise toute ton activité.
 
@@ -527,7 +560,7 @@ Clique sur **🔍 Vue individuelle**, tape un titre → les statistiques de ce m
 
 ---
 
-## 14 - Explorateur
+## 15 - Explorateur
 
 La page **🔍 Explorateur** permet de chercher dans tout le vault.
 
@@ -548,7 +581,7 @@ Clique sur **⚙ Filtres** pour affiner :
 
 ---
 
-## 15 - Raccourcis clavier
+## 16 - Raccourcis clavier
 
 | Raccourci | Action |
 |-----------|--------|
@@ -566,7 +599,7 @@ Clique sur **⚙ Filtres** pour affiner :
 
 ---
 
-## 16 - Problèmes courants
+## 17 - Problèmes courants
 
 **Le Dashboard ou les MOCs n'affichent rien**
 → Paramètres → Dataview → vérifie que **Enable DataviewJS** et **Enable Inline DataviewJS** sont activés. Recharge avec `Ctrl+R`.
@@ -612,4 +645,4 @@ Clique sur **⚙ Filtres** pour affiner :
 
 ---
 
-*Guide rédigé pour Lifetrack · Version 2026-06-06*
+*Guide rédigé pour Lifetrack · Version 2026-07-16*

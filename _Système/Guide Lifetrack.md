@@ -24,11 +24,12 @@ Ce guide t'explique tout, de l'installation à l'utilisation quotidienne.
 7. [Romans et Livres](#7--romans-et-livres)
 8. [Jeux Vidéo](#8--jeux-vidéo)
 9. [Commandes](#9--commandes)
-10. [Finances](#10--finances)
-11. [Statistiques](#11--statistiques)
-12. [Explorateur](#12--explorateur)
-13. [Raccourcis clavier](#13--raccourcis-clavier)
-14. [Problèmes courants](#14--problèmes-courants)
+10. [Sport](#10--sport)
+11. [Finances](#11--finances)
+12. [Statistiques](#12--statistiques)
+13. [Explorateur](#13--explorateur)
+14. [Raccourcis clavier](#14--raccourcis-clavier)
+15. [Problèmes courants](#15--problèmes-courants)
 
 ---
 
@@ -99,9 +100,13 @@ Lifetrack/
 │   │   ├── Romans & Livres/
 │   │   └── Jeux Vidéo/
 │   ├── Commandes/
+│   ├── Sport/
+│   │   └── Data/          ← Tes séances Hevy (JSON, ignorées par git)
+│   ├── Tâches.md
 │   └── Finances/
 │       └── Transactions/
 └── _Système/               ← Ne pas toucher (templates, scripts, configs)
+    └── Config.md           ← Ta clé API TMDB (non versionnée)
 ```
 
 Chaque dossier média contient des **sous-dossiers par statut** (ex : `Animés/En cours`, `Animés/Terminé`…). La note se déplace automatiquement dans le bon sous-dossier quand tu changes le statut.
@@ -127,6 +132,16 @@ Accès depuis le Dashboard ou la barre latérale (`_Système/MOC/`).
 5. La fiche s'ouvre automatiquement en mode lecture
 
 **Méthode alternative :** crée un nouveau fichier directement dans le bon sous-dossier (ex : `2 - Domaines/Médias/Animés/À voir/`). Le template s'applique automatiquement grâce à Templater.
+
+### Auto-remplissage TMDB / AniList
+
+Pour les films, séries et animés, tu peux remplir automatiquement titre, synopsis, cover, genres, etc. :
+
+1. Renseigne ta clé API TMDB (gratuite sur [themoviedb.org](https://www.themoviedb.org/settings/api)) dans `_Système/Config.md` (`tmdb_api_key`)
+2. À la création d'une fiche, un champ te demande l'**ID TMDB** (films/séries) ou l'**ID AniList** (animés) - trouvable dans l'URL de la fiche sur ces sites
+3. Valide : les champs se remplissent automatiquement
+
+Tu peux laisser ce champ vide pour remplir la fiche manuellement.
 
 ### Interface d'une fiche
 
@@ -392,7 +407,29 @@ La barre de stats affiche le total de commandes, le montant total dépensé, et 
 
 ---
 
-## 10 - Finances
+## 10 - Sport
+
+Le dashboard `2 - Domaines/Sport/🏋️ Sport.md` affiche tes séances de musculation importées depuis l'application [Hevy](https://www.hevyapp.com/).
+
+### Importer tes séances Hevy
+
+1. Dans l'app Hevy : **Profil → ⚙️ Paramètres → Exporter les données** - tu reçois un e-mail avec un fichier CSV en pièce jointe
+2. Lance le script d'import :
+   - **Linux** : double-clique sur `_Système/Scripts/Hevy/Import Hevy.desktop`, ou `lancer_hevy.sh`
+   - **Windows/Mac** : lance `python3 _Système/Scripts/Hevy/import_hevy.py`
+3. Choisis le fichier CSV exporté et clique sur **⬆️ Importer**
+
+Les séances sont fusionnées dans `2 - Domaines/Sport/Data/hevy_<année>.json` (un fichier par année). Réimporter le même export plusieurs fois ne crée pas de doublons.
+
+### Sections du dashboard Sport
+
+- **📊 Rythme** - nombre de séances par semaine sur les 16 dernières semaines
+- **📈 Progression** - courbe de progression (poids × reps) pour un exercice donné, avec repérage du record personnel (PR)
+- **📋 Séances** - historique détaillé des dernières séances (exercices, séries, poids, répétitions)
+
+---
+
+## 11 - Finances
 
 ### Premier démarrage
 
@@ -469,6 +506,8 @@ Tu peux ajouter/modifier les catégories via **⚙️ Paramètres** → onglet *
 
 Le moyen le plus rapide d'alimenter tes finances est d'importer tes relevés PDF.
 
+Le script reconnaît nativement les relevés **Société Générale** (`ReleveCompte_*.pdf`) et **Revolut** (`account-statement-*.pdf`), avec catégorisation automatique intégrée. N'importe quelle autre banque peut être configurée manuellement (voir plus bas).
+
 **Prérequis :** Python 3 installé + `pip install ttkbootstrap pdfplumber`
 
 **Lancer le script :**
@@ -529,7 +568,7 @@ Un bouton 👁 permet de masquer les montants pour plus de confidentialité (uti
 
 ---
 
-## 11 - Statistiques
+## 12 - Statistiques
 
 La page **📊 Statistiques** (accessible depuis le Dashboard) centralise toute l'activité de tes médias.
 
@@ -571,7 +610,7 @@ Pour ouvrir le détail d'un titre, clique sur sa carte depuis l'activité récen
 
 ---
 
-## 12 - Explorateur
+## 13 - Explorateur
 
 La page **🔍 Explorateur** permet de **rechercher dans tout le vault** avec des filtres avancés.
 
@@ -598,7 +637,7 @@ Les résultats s'affichent en liste avec le nom, le type, le dossier et la date 
 
 ---
 
-## 13 - Raccourcis clavier
+## 14 - Raccourcis clavier
 
 | Raccourci | Action |
 |-----------|--------|
@@ -618,7 +657,7 @@ Les résultats s'affichent en liste avec le nom, le type, le dossier et la date 
 
 ---
 
-## 14 - Problèmes courants
+## 15 - Problèmes courants
 
 **Les MOCs et le Dashboard n'affichent rien / affichent des erreurs**
 → Va dans **Paramètres → Dataview** et vérifie que **Enable DataviewJS** et **Enable Inline DataviewJS** sont activés. Recharge le vault (`Ctrl+R`).
@@ -661,4 +700,4 @@ Les résultats s'affichent en liste avec le nom, le type, le dossier et la date 
 
 ---
 
-*Lifetrack - créé le 2026-06-05 · guide mis à jour le 2026-06-06*
+*Lifetrack - créé le 2026-06-05 · guide mis à jour le 2026-07-16*

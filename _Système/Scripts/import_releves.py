@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Import de relevés bancaires → JSON annuels Obsidian.
+Import de relevés bancaires (SG / Revolut / génériques) → JSON annuels Obsidian.
 Interface graphique - Windows & Linux.
 
 Emplacement attendu : <vault>/_Système/Scripts/import_releves.py
@@ -57,8 +57,14 @@ def find_tx_dir(vault_root: Path) -> Path:
 
 TX_DIR = find_tx_dir(VAULT_ROOT)
 
-# ── Import du parser existant ─────────────────────────────────────────────────
+# ── Import du parser SG/Revolut ───────────────────────────────────────────────
 sys.path.insert(0, str(SCRIPT_DIR))
+PARSER_OK = False; PARSER_ERROR = ""
+try:
+    from parse_finances import parse_sg_pdf, parse_revolut_pdf
+    PARSER_OK = True
+except Exception as _e:
+    PARSER_ERROR = str(_e)
 
 # ── ttkbootstrap (auto-install si absent) ─────────────────────────────────────
 try:
@@ -86,10 +92,18 @@ except ImportError:
 def detect_pdf_type(filepath: str) -> str:
     disabled = get_disabled_builtins()
     name = Path(filepath).name.lower()
+    if 'SG' not in disabled:
+        if re.search(r'relevecpte|relevecompte', name) or re.match(r'releve', name):
+            return 'sg'
+    if 'Revolut' not in disabled:
+        if 'account-statement' in name or 'revolut' in name:
+            return 'revolut'
     try:
         import pdfplumber
         with pdfplumber.open(filepath) as pdf:
             text = " ".join((p.extract_text() or "") for p in pdf.pages[:2])
+        if 'SG' not in disabled and re.search(r'soci[eé]t[eé]\s*g[eé]n[eé]rale', text, re.I): return 'sg'
+        if 'Revolut' not in disabled and 'Revolut' in text: return 'revolut'
         # Vérifier les banques configurées manuellement (ignorer les clés internes _*)
         for bank_name, cfg in load_bank_configs().items():
             if bank_name.startswith('_') or not isinstance(cfg, dict):
@@ -255,6 +269,86 @@ def save_bank_configs(configs: dict):
 # la plus fréquente. Les règles spéciales (montants fixes du prêt, IBAN Revolut)
 # restent gérées par la logique hardcodée en fallback.
 DEFAULT_BUILTIN_RULES: dict[str, list] = {
+    'SG': [
+        {'keywords': 'REMBT',
+         'categorie': '🔙 Avoir / Remboursement achat', 'direction': 'crédit'},
+        {'keywords': 'AVANTAGECOMMERCIAL, REGULARISATIONDECOMMISSION, REMISECHEQUE',
+         'categorie': '🔙 Avoir / Remboursement achat', 'direction': 'crédit'},
+        {'keywords': 'REMBOURSEMENTVIREMENT',
+         'categorie': '🔄 Transfert interne in', 'direction': 'crédit'},
+        {'keywords': 'POCKET, SAVING',
+         'categorie': '💸 Retrait économies', 'direction': 'crédit'},
+        {'keywords': 'POCKET, SAVING',
+         'categorie': '💰 Économies', 'direction': 'débit'},
+        {'keywords': 'CAF, CAISSEALLOCATION, DROITSFAMILLE, BOURSE, CROUS, DRFIP, ACADEMIE, ENSEIGNEMENTSUP',
+         'categorie': '🎓 Bourse & Aides sociales', 'direction': 'crédit'},
+        {'keywords': 'SALAIRE, PAYE, TRAITEMENT',
+         'categorie': '💼 Salaire', 'direction': 'crédit'},
+        {'keywords': 'VRSTGAB, VERSTESPGAB, OPENBANKING, DEPOSIT',
+         'categorie': '💵 Dépôt espèces', 'direction': 'crédit'},
+        {'keywords': 'VINTED, BACKMARKET, MGP, MANGOPAY, XPOLLENS',
+         'categorie': '💰 Revenus divers', 'direction': 'crédit'},
+        {'keywords': 'ALPIQ, EDF, ENGIE',
+         'categorie': '🏠 Loyer & Charges', 'direction': 'débit'},
+        {'keywords': 'PRELEVEMENT',
+         'categorie': '🏠 Loyer & Charges', 'direction': 'débit'},
+        {'keywords': 'MUTUELLE, PHARMAC',
+         'categorie': '🏥 Santé', 'direction': 'débit'},
+        {'keywords': 'NETFLIX, SPOTIFY, CRUNCHYROLL, LASTPASS, CYBERGHOST, CLAUDE, ANTHROPIC, APPLE, UBERONE, AMAZONPRIME',
+         'categorie': '📺 Abonnements', 'direction': 'débit'},
+        {'keywords': 'SNCF, RATP, BLABLACAR, FLIXBUS, TRANSAVIA, EASYJET, RYANAIR, AIRFRANCE',
+         'categorie': '🚗 Transport', 'direction': 'débit'},
+        {'keywords': 'LECLERC, CARREFOUR, LIDL, ALDI, INTERMARCHE, MONOPRIX, SUPERU, AUCHAN, UBEREATS, DELIVEROO, MCDONALD, KFC, BURGERKING',
+         'categorie': '🛒 Alimentation', 'direction': 'débit'},
+        {'keywords': 'RETRAITDAB, RETRAITGAB',
+         'categorie': '🏧 Retrait espèces', 'direction': 'débit'},
+        {'keywords': 'GOOGLEPLAY, XSOLLA, INSTANTGAMING, STEAMPURCHASE, STEAM, DOKKANBATTLE, SUPERCELL, PAYSAFECARD, NINTENDO, SONYINTERACT, CGR, PATHE, UGC',
+         'categorie': '🎮 Loisirs & Jeux', 'direction': 'débit'},
+        {'keywords': 'AMAZON, VINTED, MGP, BACKMARKET, LDLC, RHINOSHIELD, PAYPAL',
+         'categorie': '🛍️ Shopping', 'direction': 'débit'},
+        {'keywords': 'TREATWELL',
+         'categorie': '💇 Coiffure & Beauté', 'direction': 'débit'},
+        {'keywords': 'COTISATIONMENS, COTISANNU, FRAISVIRINSTANT, FRAISPAIEMENT',
+         'categorie': '💳 Frais bancaires', 'direction': 'débit'},
+        {'keywords': 'ORANGEMONEY, TRANSFERWISE, VIRINSTANTANEE, VIREUROPEEN, PAYLIB',
+         'categorie': '💸 Envoi d\'argent', 'direction': 'débit'},
+    ],
+    'Revolut': [
+        {'keywords': 'REVOLUTPREMIUM, REVOLUTPLUS, REVOLUTMETAL, REVOLUTULTRA, REVOLUTSTANDARD',
+         'categorie': '📺 Abonnements', 'direction': 'débit'},
+        {'keywords': 'POCKET, SAVING',
+         'categorie': '💸 Retrait économies', 'direction': 'crédit'},
+        {'keywords': 'POCKET, SAVING',
+         'categorie': '💰 Économies', 'direction': 'débit'},
+        {'keywords': 'CAF, CAISSEALLOCATION, BOURSE, CROUS, DRFIP',
+         'categorie': '🎓 Bourse & Aides sociales', 'direction': 'crédit'},
+        {'keywords': 'SALAIRE, PAYE',
+         'categorie': '💼 Salaire', 'direction': 'crédit'},
+        {'keywords': 'CASHBACK, REFUND',
+         'categorie': '🔙 Avoir / Remboursement achat', 'direction': 'crédit'},
+        {'keywords': 'VINTED, BACKMARKET',
+         'categorie': '💰 Revenus divers', 'direction': 'crédit'},
+        {'keywords': 'ALPIQ, EDF, ENGIE',
+         'categorie': '🏠 Loyer & Charges', 'direction': 'débit'},
+        {'keywords': 'MUTUELLE, PHARMAC',
+         'categorie': '🏥 Santé', 'direction': 'débit'},
+        {'keywords': 'NETFLIX, SPOTIFY, CRUNCHYROLL, LASTPASS, CYBERGHOST, CLAUDE, ANTHROPIC, UBERONE, AMAZONPRIME',
+         'categorie': '📺 Abonnements', 'direction': 'débit'},
+        {'keywords': 'SNCF, RATP, UBER, BLABLACAR, FLIXBUS, TRANSAVIA, EASYJET, RYANAIR',
+         'categorie': '🚗 Transport', 'direction': 'débit'},
+        {'keywords': 'LECLERC, CARREFOUR, LIDL, ALDI, INTERMARCHE, MONOPRIX, AUCHAN, UBEREATS, DELIVEROO, MCDONALD, KFC, BURGERKING',
+         'categorie': '🛒 Alimentation', 'direction': 'débit'},
+        {'keywords': 'ATM, WITHDRAWAL',
+         'categorie': '🏧 Retrait espèces', 'direction': 'débit'},
+        {'keywords': 'STEAM, NINTENDO, PLAYSTATION, GAMING',
+         'categorie': '🎮 Loisirs & Jeux', 'direction': 'débit'},
+        {'keywords': 'AMAZON, VINTED, BACKMARKET, LDLC, PAYPAL',
+         'categorie': '🛍️ Shopping', 'direction': 'débit'},
+        {'keywords': 'FEE',
+         'categorie': '💳 Frais bancaires', 'direction': 'débit'},
+        {'keywords': 'TRANSFERWISE, ORANGEMONEY',
+         'categorie': '💸 Envoi d\'argent', 'direction': 'débit'},
+    ],
 }
 
 
@@ -474,6 +568,8 @@ CLR = {
     'muted':      '#64748b',
     'text':       '#0f172a',
     # badges type PDF
+    'sg_fg':      '#0891b2', 'sg_bg':      '#cffafe',
+    'rev_fg':     '#7c3aed', 'rev_bg':     '#ede9fe',
     'unk_fg':     '#374151', 'unk_bg':     '#f3f4f6',
 }
 
@@ -710,7 +806,8 @@ class CategorizationRulesDialog(tk.Toplevel):
                  bg=CLR['header_bg'], fg=CLR['header_fg'],
                  font=('Segoe UI', 11, 'bold')).pack()
         tk.Label(hdr,
-                 text="Les règles sont vérifiées dans l'ordre. La première correspondance gagne.",
+                 text="Les règles sont vérifiées dans l'ordre. La première correspondance gagne.\n"
+                      "Pour SG et Revolut, les règles s'appliquent AVANT la logique automatique.",
                  bg=CLR['header_bg'], fg=CLR['header_sub'],
                  font=('Segoe UI', 8), justify='center').pack(pady=(2, 0))
 
@@ -1511,7 +1608,7 @@ class SuccessImportDialog(tk.Toplevel):
 class BankManagerDialog(tk.Toplevel):
     """
     Fenêtre de gestion des configurations de banques.
-    Affiche les configs de banques custom (bank_configs.json).
+    Affiche les parsers intégrés (SG, Revolut) et les configs custom (bank_configs.json).
     Permet de modifier ou supprimer les configs custom, et d'éditer les règles de catégorisation.
     """
 
@@ -1552,6 +1649,14 @@ class BankManagerDialog(tk.Toplevel):
     def _render(self):
         for w in self._main.winfo_children():
             w.destroy()
+
+        # ── Parsers intégrés ─────────────────────────────────────────
+        self._section(self._main, "INTÉGRÉS - lecture seule")
+        for name, banque, desc in [
+            ("SG",      "Société Générale", "Parser natif - relevés ReleveCompte_*.pdf"),
+            ("Revolut", "Revolut",          "Parser natif - account-statement-*.pdf"),
+        ]:
+            self._row_builtin(name, banque, desc)
 
         # ── Configs custom ───────────────────────────────────────────
         configs = load_bank_configs()
@@ -1860,6 +1965,12 @@ class ImportApp(tk.Tk):
         w, h = 860, 600
         self.geometry(f'{w}x{h}+{max(0,(sw-w)//2)}+{max(0,(sh-h)//2)}')
 
+        if not PARSER_OK:
+            self.after(300, lambda: messagebox.showerror(
+                "Dépendance manquante",
+                f"Impossible d'importer parse_finances.py :\n{PARSER_ERROR}\n\n"
+                "Vérifiez que parse_finances.py est dans le même dossier."))
+
 
     # ── Construction ──────────────────────────────────────────────────────────
 
@@ -2166,6 +2277,8 @@ class ImportApp(tk.Tk):
             cfg   = (label, '#5b21b6', '#ede9fe')   # violet pour banques custom
         else:
             cfg = {
+                'sg':      ('SG',      CLR['sg_fg'],  CLR['sg_bg']),
+                'revolut': ('Revolut', CLR['rev_fg'], CLR['rev_bg']),
                 'inconnu': ('?',       CLR['unk_fg'], CLR['unk_bg']),
             }.get(ptype, ('?', CLR['unk_fg'], CLR['unk_bg']))
 
@@ -2209,11 +2322,18 @@ class ImportApp(tk.Tk):
         self._btn_disable(self._btn_analyze)
         self.update()
 
+        if not PARSER_OK:
+            messagebox.showerror('Erreur', 'parse_finances.py introuvable.'); return
+
         try:
             raw_new, errors = [], []
             for fp, ptype in self.pdf_list:
                 try:
-                    if ptype.startswith('custom:'):
+                    if ptype == 'sg':
+                        raw_new.extend(parse_sg_pdf(fp, user_rules=get_builtin_rules('SG')))
+                    elif ptype == 'revolut':
+                        raw_new.extend(parse_revolut_pdf(fp, user_rules=get_builtin_rules('Revolut')))
+                    elif ptype.startswith('custom:'):
                         bank_name = ptype[7:]
                         configs   = load_bank_configs()
                         if bank_name in configs:
