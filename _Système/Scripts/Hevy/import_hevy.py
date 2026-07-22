@@ -232,6 +232,10 @@ class ImportHevyApp:
             self.file_var.set(os.path.basename(path))
             self.import_btn.config(state="normal")
             self.status_var.set("")
+            # Lance l'import automatiquement dès la sélection du fichier
+            # (le bouton "Importer" reste disponible pour relancer manuellement,
+            # par ex. après avoir remplacé le fichier).
+            self._do_import()
 
     def _do_import(self):
         if not self.csv_path:
