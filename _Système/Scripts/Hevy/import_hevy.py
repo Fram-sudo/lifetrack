@@ -2,6 +2,10 @@
 # -*- coding: utf-8 -*-
 """
 import_hevy.py - Import des exports Hevy (CSV) vers Lifetrack
+
+Emplacement attendu : <vault>/_Système/Scripts/Hevy/import_hevy.py
+Le script trouve le vault automatiquement depuis son emplacement (aucune
+configuration necessaire dans le cas normal).
 """
 
 import csv
@@ -13,15 +17,29 @@ from tkinter import filedialog, messagebox
 from datetime import datetime
 
 # ── CONFIG ──────────────────────────────────────────────────────────────────────
-SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
-CONFIG_PATH = os.path.join(SCRIPT_DIR, "..", "script_config.json")
+SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))                      # .../_Système/Scripts/Hevy
+CONFIG_PATH = os.path.join(SCRIPT_DIR, "..", "script_config.json")           # .../_Système/Scripts/script_config.json
+AUTO_VAULT_PATH = os.path.abspath(os.path.join(SCRIPT_DIR, "..", "..", ".."))  # Hevy -> Scripts -> _Système -> vault
 
 def load_vault_path():
+    """Chemin du vault : detecte automatiquement depuis l'emplacement du script.
+    Pour forcer un autre chemin (vault deplace, plusieurs vaults sur la meme
+    machine...), ajoute "vault_path" dans _Système/Scripts/script_config.json.
+
+    Exemple (Linux/Mac) :
+        { "vault_path": "/home/guillaume/Documents/Obsidian/Lifetrack" }
+
+    Exemple (Windows, utilise des / et pas des \\) :
+        { "vault_path": "C:/Users/TonNom/Documents/Obsidian/Lifetrack" }
+    """
     try:
         with open(CONFIG_PATH, encoding="utf-8") as f:
-            return json.load(f).get("vault_path", "")
+            configured = (json.load(f).get("vault_path") or "").strip()
+            if configured and os.path.isdir(configured):
+                return configured
     except Exception:
-        return ""
+        pass
+    return AUTO_VAULT_PATH
 
 VAULT_PATH = load_vault_path()
 SPORT_DATA_DIR = os.path.join(VAULT_PATH, "2 - Domaines/Sport/Data")

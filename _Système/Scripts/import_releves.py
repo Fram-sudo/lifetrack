@@ -34,6 +34,16 @@ def save_script_config(cfg: dict):
         json.dumps(cfg, ensure_ascii=False, indent=2), encoding='utf-8')
 
 def get_vault_root() -> Path:
+    """Chemin du vault : detecte automatiquement depuis l'emplacement du script.
+    Pour forcer un autre chemin (vault deplace, plusieurs vaults sur la meme
+    machine...), ajoute "vault_path" dans _Système/Scripts/script_config.json.
+
+    Exemple (Linux/Mac) :
+        { "vault_path": "/home/guillaume/Documents/Obsidian/Lifetrack" }
+
+    Exemple (Windows, utilise des / et pas des \\) :
+        { "vault_path": "C:/Users/TonNom/Documents/Obsidian/Lifetrack" }
+    """
     cfg = load_script_config()
     if 'vault_path' in cfg:
         p = Path(cfg['vault_path'])
