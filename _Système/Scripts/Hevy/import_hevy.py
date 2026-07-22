@@ -147,14 +147,15 @@ class ImportHevyApp:
     def __init__(self, root):
         self.root = root
         root.title("Import Hevy → Lifetrack")
-        root.resizable(False, False)
+        root.resizable(True, True)
         root.configure(bg=self.BG)
 
         self._build_ui()
         self.csv_path = None
 
         root.update_idletasks()
-        w, h = 520, 360
+        w, h = 620, 460
+        root.minsize(560, 400)
         sw, sh = root.winfo_screenwidth(), root.winfo_screenheight()
         root.geometry(f"{w}x{h}+{(sw-w)//2}+{(sh-h)//2}")
 
@@ -186,26 +187,27 @@ class ImportHevyApp:
 
         # Sélecteur de fichier
         pick_row = tk.Frame(body, bg=self.BG)
-        pick_row.pack(fill="x", pady=(0, 10))
+        pick_row.pack(fill="x", pady=(0, 6))
 
         tk.Button(pick_row, text="📂  Choisir le fichier CSV",
                   command=self._pick_file,
                   font=("Inter", 10), bg=self.ACCENT, fg="white",
                   relief="flat", padx=12, pady=6,
                   cursor="hand2", activebackground="#1a5adb",
-                  activeforeground="white").pack(side="left")
+                  activeforeground="white").pack(anchor="w")
 
         self.file_var = tk.StringVar(value="Aucun fichier sélectionné")
-        tk.Label(pick_row, textvariable=self.file_var,
+        self.file_lbl = tk.Label(body, textvariable=self.file_var,
                  font=("Inter", 9), bg=self.BG, fg=self.FG2,
-                 wraplength=280).pack(side="left", padx=12)
+                 justify="left", wraplength=560)
+        self.file_lbl.pack(anchor="w", pady=(6, 10), fill="x")
 
         # Statut
         self.status_var = tk.StringVar()
         self.status_lbl = tk.Label(body, textvariable=self.status_var,
                                    font=("Inter", 9), bg=self.BG, fg=self.FG2,
-                                   justify="left", wraplength=460)
-        self.status_lbl.pack(anchor="w", pady=(4, 0))
+                                   justify="left", wraplength=560)
+        self.status_lbl.pack(anchor="w", pady=(4, 0), fill="x")
 
         # Bouton Importer
         btn_row = tk.Frame(body, bg=self.BG)
