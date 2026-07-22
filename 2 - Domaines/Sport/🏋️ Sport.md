@@ -338,7 +338,21 @@ const _drawLineChart = (cnt, points, {yFmt, color}) => {
   const minV = Math.min(...vals), maxV = Math.max(...vals)
   const pr = maxV, startV = vals[0], delta = pr - startV
   const n = points.length
-  const range = maxV-minV || 1
+
+  // Pas assez de variation pour tracer un axe fiable (1 seule séance, ou même
+  // valeur à chaque fois) : on évite un axe avec des graduations fictives.
+  if (n < 2 || minV === maxV) {
+    const box = cnt.createDiv()
+    box.style.cssText = 'text-align:center;padding:26px 16px;background:var(--background-primary);border-radius:8px;margin-bottom:14px;'
+    box.createEl('div',{attr:{style:`font-size:1.7em;font-weight:800;color:${color};margin-bottom:4px;`}}).textContent = yFmt(vals[0])
+    box.createEl('div',{attr:{style:'font-size:0.8em;color:var(--text-muted);'}}).textContent =
+      n < 2 ? 'Une seule séance enregistrée — reviens après ta prochaine séance pour voir ta progression.'
+            : 'Même valeur à chaque séance pour l\'instant — pas encore de progression à afficher.'
+    miniStatsRow(cnt, [['Record (PR)', yFmt(pr), ACCENT], ['Séances', n]])
+    return
+  }
+
+  const range = maxV-minV
   const vMin = minV-range*0.15, vMax = maxV+range*0.22
 
   const _cont = dv.container.closest('.markdown-preview-section,.markdown-rendered,.cm-preview-code-block') || dv.container.parentElement || dv.container
@@ -376,7 +390,12 @@ const _drawLineChart = (cnt, points, {yFmt, color}) => {
     const isPR = points[i].value===pr && points.findIndex(p=>p.value===pr)===i
     ctx.beginPath(); ctx.arc(xOf(i),yOf(points[i].value), isPR?5.5:3.5,0,Math.PI*2)
     ctx.fillStyle = isPR?ACCENT:color; ctx.fill()
-    if (isPR) { ctx.fillStyle=ACCENT; ctx.font='bold 9px Inter,sans-serif'; ctx.textAlign='center'; ctx.fillText('PR',xOf(i),yOf(points[i].value)-9) }
+    if (isPR) {
+      ctx.fillStyle=ACCENT; ctx.font='bold 9px Inter,sans-serif'
+      ctx.textAlign = i===0 ? 'left' : i===n-1 ? 'right' : 'center'
+      const lx = i===0 ? xOf(i)+4 : i===n-1 ? xOf(i)-4 : xOf(i)
+      ctx.fillText('PR', lx, yOf(points[i].value)-9)
+    }
   }
 
   const labelIdxs = [0, Math.floor(n/2), n-1].filter((v,i,a)=>a.indexOf(v)===i && n>1)
