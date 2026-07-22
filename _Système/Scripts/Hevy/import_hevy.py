@@ -42,7 +42,27 @@ def load_vault_path():
     return AUTO_VAULT_PATH
 
 VAULT_PATH = load_vault_path()
-SPORT_DATA_DIR = os.path.join(VAULT_PATH, "2 - Domaines/Sport/Data")
+
+def sport_data_dir():
+    """Recalcule le dossier de donnees a chaque appel : suit VAULT_PATH meme
+    si l'utilisateur change de vault depuis l'interface (bouton 'Changer')."""
+    return os.path.join(VAULT_PATH, "2 - Domaines/Sport/Data")
+
+def save_vault_path(new_path):
+    """Enregistre le nouveau chemin dans script_config.json (sans ecraser les
+    autres cles) et met a jour VAULT_PATH pour le reste de la session."""
+    global VAULT_PATH
+    cfg = {}
+    if os.path.exists(CONFIG_PATH):
+        try:
+            with open(CONFIG_PATH, encoding="utf-8") as f:
+                cfg = json.load(f)
+        except Exception:
+            cfg = {}
+    cfg["vault_path"] = new_path
+    with open(CONFIG_PATH, "w", encoding="utf-8") as f:
+        json.dump(cfg, f, ensure_ascii=False, indent=2)
+    VAULT_PATH = new_path
 
 # ── PARSING DATES ───────────────────────────────────────────────────────────────
 # Hevy exporte les dates dans le format d'affichage de l'app (dépend de la langue
@@ -151,7 +171,7 @@ def parse_hevy_csv(filepath):
 
 
 def load_existing_year(year):
-    path = os.path.join(SPORT_DATA_DIR, f"hevy_{year}.json")
+    path = os.path.join(sport_data_dir(), f"hevy_{year}.json")
     if os.path.exists(path):
         try:
             with open(path, encoding='utf-8') as f:
@@ -170,7 +190,7 @@ def merge_and_save(new_workouts):
 
     total_added = 0
     year_counts = {}
-    os.makedirs(SPORT_DATA_DIR, exist_ok=True)
+    os.makedirs(sport_data_dir(), exist_ok=True)
 
     for year, ws in sorted(by_year.items()):
         existing     = load_existing_year(year)
@@ -178,7 +198,7 @@ def merge_and_save(new_workouts):
         added        = [w for w in ws if w['id'] not in existing_ids]
         merged       = sorted(existing + added, key=lambda w: w['date'])
 
-        path = os.path.join(SPORT_DATA_DIR, f"hevy_{year}.json")
+        path = os.path.join(sport_data_dir(), f"hevy_{year}.json")
         with open(path, 'w', encoding='utf-8') as f:
             json.dump(merged, f, ensure_ascii=False, indent=2)
 
@@ -208,10 +228,13 @@ class ImportHevyApp:
         self.csv_path = None
 
         root.update_idletasks()
-        w, h = 620, 460
-        root.minsize(560, 400)
+        w, h = 620, 480
+        root.minsize(560, 420)
         sw, sh = root.winfo_screenwidth(), root.winfo_screenheight()
         root.geometry(f"{w}x{h}+{(sw-w)//2}+{(sh-h)//2}")
+
+    def _vault_short(self):
+        return VAULT_PATH.replace(os.path.expanduser("~"), "~")
 
     def _build_ui(self):
         # Header
@@ -221,6 +244,16 @@ class ImportHevyApp:
                  bg=self.BG, fg=self.FG).pack(anchor="w")
         tk.Label(hdr, text="Importe ton export CSV Hevy dans Lifetrack",
                  font=("Inter", 10), bg=self.BG, fg=self.FG2).pack(anchor="w")
+
+        vault_row = tk.Frame(hdr, bg=self.BG)
+        vault_row.pack(anchor="w", pady=(6, 0))
+        self.vault_lbl = tk.Label(vault_row, text=f"📁 Vault : {self._vault_short()}",
+                 font=("Inter", 8), bg=self.BG, fg=self.FG2)
+        self.vault_lbl.pack(side="left")
+        tk.Button(vault_row, text="Changer", command=self._change_vault,
+                  font=("Inter", 8, "underline"), bg=self.BG, fg=self.ACCENT,
+                  relief="flat", bd=0, cursor="hand2", padx=6, pady=0,
+                  activebackground=self.BG, activeforeground=self.ACCENT).pack(side="left", padx=(6, 0))
 
         tk.Frame(self.root, height=1, bg="#45475a").pack(fill="x")
 
@@ -262,6 +295,24 @@ class ImportHevyApp:
                                    font=("Inter", 9), bg=self.BG, fg=self.FG2,
                                    justify="left", wraplength=560)
         self.status_lbl.pack(anchor="w", pady=(4, 0), fill="x")
+
+    def _change_vault(self):
+        new_path = filedialog.askdirectory(
+            title="Sélectionner le dossier racine du vault Lifetrack",
+            initialdir=VAULT_PATH)
+        if not new_path:
+            return
+        if not os.path.isdir(os.path.join(new_path, "_Système")):
+            if not messagebox.askyesno(
+                "Dossier inattendu",
+                f"Le dossier _Système est introuvable dans :\n  {new_path}\n\n"
+                "Ce n'est peut-être pas un vault Lifetrack. Utiliser quand même ce dossier ?"
+            ):
+                return
+        save_vault_path(new_path)
+        self.vault_lbl.config(text=f"📁 Vault : {self._vault_short()}")
+        self.status_var.set("✅ Vault mis à jour.")
+        self.status_lbl.config(fg=self.SUCCESS)
 
         # Bouton Importer
         btn_row = tk.Frame(body, bg=self.BG)
