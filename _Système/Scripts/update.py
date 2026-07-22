@@ -28,6 +28,7 @@ SYSTEM_FILES = [
     "_Système/Scripts/Hevy/import_hevy.py",
     "_Système/Scripts/Hevy/lancer_hevy.sh",
     "_Système/Scripts/Hevy/Import Hevy.desktop",
+    "_Système/Scripts/Hevy/Import Hevy.bat",
     # Lanceurs racine
     "update.sh",
     "update.bat",

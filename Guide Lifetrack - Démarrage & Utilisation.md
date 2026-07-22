@@ -361,9 +361,9 @@ Exemple : tu viens de faire 3 mois de séances sur Hevy et veux les voir dans Li
 1. Dans l'app Hevy : **Profil → ⚙️ Paramètres → Exporter les données** - tu reçois un e-mail avec un CSV
 2. Enregistre le fichier CSV quelque part sur ton ordinateur
 3. Lance le script d'import :
-   - **Linux** : double-clique sur `_Système/Scripts/Hevy/Import Hevy.desktop` (ou `lancer_hevy.sh`)
-   - **Windows/macOS** : `cd` vers `_Système/Scripts/Hevy/` puis `python3 import_hevy.py`
-4. Clique sur **📂 Choisir le fichier CSV**, sélectionne ton export, puis **⬆️ Importer**
+   - **Windows** : double-clique sur `_Système/Scripts/Hevy/Import Hevy.bat`
+   - **Linux/macOS** : double-clique sur `_Système/Scripts/Hevy/Import Hevy.desktop` (ou `lancer_hevy.sh`)
+4. Clique sur **📂 Choisir le fichier CSV** et sélectionne ton export — l'import se lance automatiquement
 
 Tes séances sont fusionnées dans `2 - Domaines/Sport/Data/hevy_<année>.json`. Réimporter un export qui se chevauche avec des données déjà présentes ne crée pas de doublons.
 

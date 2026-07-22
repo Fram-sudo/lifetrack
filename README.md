@@ -186,8 +186,10 @@ Le dashboard `2 - Domaines/Sport/🏋️ Sport.md` affiche tes séances de muscu
 
 **Import d'un export Hevy :**
 1. Dans l'app Hevy : Profil → ⚙️ Paramètres → Exporter les données (tu reçois un CSV par e-mail)
-2. Lance `_Système/Scripts/Hevy/lancer_hevy.sh` (Linux/Mac) ou le script Python directement (Windows)
-3. Sélectionne le CSV exporté — les séances sont fusionnées dans `2 - Domaines/Sport/Data/hevy_<année>.json` (jamais écrasé par les mises à jour)
+2. Lance le script d'import :
+   - **Windows** : double-clique sur `_Système/Scripts/Hevy/Import Hevy.bat`
+   - **Linux/Mac** : double-clique sur `_Système/Scripts/Hevy/Import Hevy.desktop` ou `lancer_hevy.sh`
+3. Choisis le CSV exporté — l'import se lance automatiquement dès la sélection du fichier, les séances sont fusionnées dans `2 - Domaines/Sport/Data/hevy_<année>.json` (jamais écrasé par les mises à jour)
 
 ---
 
