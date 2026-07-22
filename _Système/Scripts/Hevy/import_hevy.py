@@ -26,6 +26,39 @@ def load_vault_path():
 VAULT_PATH = load_vault_path()
 SPORT_DATA_DIR = os.path.join(VAULT_PATH, "2 - Domaines/Sport/Data")
 
+# ── PARSING DATES ───────────────────────────────────────────────────────────────
+# Hevy exporte les dates dans le format d'affichage de l'app (dépend de la langue
+# du téléphone), pas en ISO. Ex. observés : "2026-07-21 18:55:00" (ISO) ou
+# "21 juil. 2026, 18:55" (FR) ou "21 Jul 2026, 18:55" (EN). On essaie plusieurs formats.
+_MONTHS = {
+    'janv': 1, 'jan': 1, 'févr': 2, 'fevr': 2, 'feb': 2, 'mars': 3, 'mar': 3,
+    'avr': 4, 'apr': 4, 'mai': 5, 'may': 5, 'juin': 6, 'jun': 6,
+    'juil': 7, 'jul': 7, 'août': 8, 'aout': 8, 'aug': 8,
+    'sept': 9, 'sep': 9, 'oct': 10, 'nov': 11, 'déc': 12, 'dec': 12,
+}
+
+def parse_hevy_datetime(s):
+    """Parse une date Hevy (ISO ou format localisé 'DD mmm. YYYY, HH:MM'). Retourne un datetime ou None."""
+    s = (s or '').strip()
+    if not s:
+        return None
+    for fmt in ('%Y-%m-%d %H:%M:%S', '%Y-%m-%d %H:%M'):
+        try:
+            return datetime.strptime(s[:19], fmt)
+        except Exception:
+            pass
+    m = re.match(r'^(\d{1,2})\s+([A-Za-zéûîôâàäëïöüÿ.]+)\.?\s+(\d{4}),?\s+(\d{1,2}):(\d{2})', s)
+    if m:
+        day, mon_raw, year, hh, mm = m.groups()
+        month = _MONTHS.get(mon_raw.lower().rstrip('.'))
+        if month:
+            try:
+                return datetime(int(year), month, int(day), int(hh), int(mm))
+            except Exception:
+                return None
+    return None
+
+
 # ── PARSING CSV ──────────────────────────────────────────────────────────────────
 def parse_hevy_csv(filepath):
     """
@@ -54,13 +87,16 @@ def parse_hevy_csv(filepath):
 
             key = (title, start_time)
             if key not in workouts:
-                try:
-                    dt_s = datetime.strptime(start_time[:19], '%Y-%m-%d %H:%M:%S')
-                    dt_e = datetime.strptime(end_time[:19],   '%Y-%m-%d %H:%M:%S')
+                dt_s = parse_hevy_datetime(start_time)
+                dt_e = parse_hevy_datetime(end_time)
+                if dt_s and dt_e:
                     date_str   = dt_s.strftime('%Y-%m-%d')
-                    duration_m = int((dt_e - dt_s).total_seconds() / 60)
-                except Exception:
-                    date_str   = start_time[:10] if start_time else '2000-01-01'
+                    duration_m = max(0, int((dt_e - dt_s).total_seconds() / 60))
+                elif dt_s:
+                    date_str   = dt_s.strftime('%Y-%m-%d')
+                    duration_m = 0
+                else:
+                    date_str   = '2000-01-01'
                     duration_m = 0
 
                 safe = re.sub(r'[^a-z0-9]+', '-', title.lower()).strip('-')
