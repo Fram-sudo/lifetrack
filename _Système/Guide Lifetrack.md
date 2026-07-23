@@ -24,12 +24,13 @@ Ce guide t'explique tout, de l'installation à l'utilisation quotidienne.
 7. [Romans et Livres](#7--romans-et-livres)
 8. [Jeux Vidéo](#8--jeux-vidéo)
 9. [Commandes](#9--commandes)
-10. [Sport](#10--sport)
-11. [Finances](#11--finances)
-12. [Statistiques](#12--statistiques)
-13. [Explorateur](#13--explorateur)
-14. [Raccourcis clavier](#14--raccourcis-clavier)
-15. [Problèmes courants](#15--problèmes-courants)
+10. [Recettes](#10--recettes)
+11. [Sport](#11--sport)
+12. [Finances](#12--finances)
+13. [Statistiques](#13--statistiques)
+14. [Explorateur](#14--explorateur)
+15. [Raccourcis clavier](#15--raccourcis-clavier)
+16. [Problèmes courants](#16--problèmes-courants)
 
 ---
 
@@ -100,6 +101,12 @@ Lifetrack/
 │   │   ├── Romans & Livres/
 │   │   └── Jeux Vidéo/
 │   ├── Commandes/
+│   ├── Recettes/
+│   │   ├── Plats/
+│   │   ├── Desserts/
+│   │   ├── Petit déjeuner/
+│   │   ├── Collations & Goûters/
+│   │   └── Autres/        ← Entrée, Boisson, Autre
 │   ├── Sport/
 │   │   └── Data/          ← Tes séances Hevy (JSON, ignorées par git)
 │   ├── Tâches.md
@@ -407,7 +414,54 @@ La barre de stats affiche le total de commandes, le montant total dépensé, et 
 
 ---
 
-## 10 - Sport
+## 10 - Recettes
+
+Tes recettes de cuisine, dans `2 - Domaines/Recettes/` organisées en `Plats/`, `Desserts/`, `Petit déjeuner/`, `Collations & Goûters/` et `Autres/` (Entrée, Boisson, Autre).
+
+### Créer une recette
+
+`Ctrl+Q` → **🍳 Nouvelle recette** → choisis la catégorie (🍽 Plat, 🍰 Dessert, 🥐 Petit déjeuner, 🍪 Collation-Goûter, 🍴 Autres) → entre le titre
+
+Si tu choisis "Autres", une popup te demande de préciser (Entrée, Boisson, Autre).
+
+### Champs disponibles
+
+| Champ | Description |
+|-------|-------------|
+| **Titre** | Nom de la recette |
+| **Cover** | URL ou fichier image |
+| **Catégorie** | Plat / Dessert / Petit déjeuner / Collation / Entrée / Boisson / Autre |
+| **Difficulté** | Facile / Moyen / Difficile |
+| **Temps de préparation / cuisson** | En minutes |
+| **Portions** | Nombre de portions (active le calculateur de portions) |
+| **Note** | Note de 0 à 10 |
+| **Macros** | Texte libre affiché sous le titre (ex : "320 kcal - 25g protéines") |
+| **Source** | URL de la recette d'origine |
+
+### Interface d'une fiche
+
+Les fiches recette s'ouvrent **en lecture seule** par défaut, pour éviter de modifier ou supprimer un ingrédient/étape par erreur en consultant simplement la recette.
+
+- **✏️ Modifier** - débloque l'édition : les badges deviennent cliquables, les boutons **➕ Ingrédient** / **➕ Étape** / **➕ Lien** / **➕ Photo** apparaissent, ainsi que les croix de suppression
+- **✅ Terminé** - repasse en lecture seule
+
+Le mode Modifier reste actif tant que tu ne cliques pas sur "Terminé", même en enchaînant plusieurs ajouts ou suppressions.
+
+### Calculateur de portions
+
+Une fois le champ **Portions** renseigné, un sélecteur (−/+) apparaît à côté de "🥘 Ingrédients" : les quantités de chaque ingrédient se recalculent automatiquement (entiers, décimaux, fractions). Il **reste actif même en lecture seule** puisqu'il ne modifie que l'affichage, jamais les données enregistrées. Un bouton ↺ permet de revenir aux portions d'origine.
+
+### Note personnelle
+
+Tout en bas de la fiche, la section **📝 Note** te permet d'écrire une remarque personnelle (variante, astuce, retour d'expérience) via le bouton **+ Ajouter une note**, éditable uniquement en mode Modifier.
+
+### MOC Recettes
+
+Le **MOC - Recettes** affiche toutes tes recettes en galerie avec cover, filtres (Plats / Desserts / Petit déj / Collations / Meilleures notes) et une barre de recherche par nom.
+
+---
+
+## 11 - Sport
 
 Le dashboard `2 - Domaines/Sport/🏋️ Sport.md` affiche tes séances de musculation, importées depuis l'application [Hevy](https://www.hevyapp.com/) et/ou saisies manuellement.
 
@@ -438,7 +492,7 @@ Ces séances sont enregistrées séparément (`manuel_<année>.json`), donc un f
 
 ---
 
-## 11 - Finances
+## 12 - Finances
 
 ### Premier démarrage
 
@@ -577,7 +631,7 @@ Un bouton 👁 permet de masquer les montants pour plus de confidentialité (uti
 
 ---
 
-## 12 - Statistiques
+## 13 - Statistiques
 
 La page **📊 Statistiques** (accessible depuis le Dashboard) centralise toute l'activité de tes médias.
 
@@ -619,7 +673,7 @@ Pour ouvrir le détail d'un titre, clique sur sa carte depuis l'activité récen
 
 ---
 
-## 13 - Explorateur
+## 14 - Explorateur
 
 La page **🔍 Explorateur** permet de **rechercher dans tout le vault** avec des filtres avancés.
 
@@ -646,7 +700,7 @@ Les résultats s'affichent en liste avec le nom, le type, le dossier et la date 
 
 ---
 
-## 14 - Raccourcis clavier
+## 15 - Raccourcis clavier
 
 | Raccourci | Action |
 |-----------|--------|
@@ -666,7 +720,7 @@ Les résultats s'affichent en liste avec le nom, le type, le dossier et la date 
 
 ---
 
-## 15 - Problèmes courants
+## 16 - Problèmes courants
 
 **Les MOCs et le Dashboard n'affichent rien / affichent des erreurs**
 → Va dans **Paramètres → Dataview** et vérifie que **Enable DataviewJS** et **Enable Inline DataviewJS** sont activés. Recharge le vault (`Ctrl+R`).

@@ -72,6 +72,8 @@ const sections = [
     count: dv.pages('"2 - Domaines/Médias/Jeux Vidéo"').where(p=>p.statut==="en cours").length+" en cours" },
   { icon:"🛒", name:"Commandes",      link:"MOC - Commandes",        color:"#fe640b", bg:"rgba(254,100,11,0.09)",
     count: dv.pages('"2 - Domaines/Commandes"').where(p=>p.type==="commande"&&p.statut!=="livré"&&p.statut!=="annulé").length+" en attente" },
+  { icon:"🍳", name:"Recettes",       link:"MOC - Recettes",         color:"#df8e1d", bg:"rgba(223,142,29,0.09)",
+    count: dv.pages('"2 - Domaines/Recettes"').where(p=>p.type==="recette").length+" recettes" },
   { icon:"💰", name:"Finances",       link:"💰 Finances",            color:"#40a02b", bg:"rgba(64,160,43,0.09)",
     count: _financeCount },
   { icon:"🏋️", name:"Sport",          link:"🏋️ Sport",               color:"#e85d04", bg:"rgba(232,93,4,0.09)",

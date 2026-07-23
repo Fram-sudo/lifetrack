@@ -106,6 +106,12 @@ lifetrack/
 │   │   ├── 🏋️ Sport.md               ← Dashboard sport (import Hevy)
 │   │   └── Data/                     ← Tes séances JSON (ignorées par git)
 │   ├── Commandes/                    ← Suivi de commandes
+│   ├── Recettes/                     ← Tes recettes de cuisine
+│   │   ├── Plats/
+│   │   ├── Desserts/
+│   │   ├── Petit déjeuner/
+│   │   ├── Collations & Goûters/
+│   │   └── Autres/                   ← Entrée, Boisson, Autre
 │   ├── Médias/                       ← Films, animés, séries, jeux, lectures
 │   └── Tâches.md                     ← Liste de tâches (utilisée par le Dashboard)
 ├── _Système/
@@ -194,6 +200,22 @@ Le dashboard `2 - Domaines/Sport/🏋️ Sport.md` affiche tes séances de muscu
 Si le script n'importe pas dans le bon vault (plusieurs vaults sur ta machine, ou vault déplacé), utilise le bouton "Changer" en haut de la fenêtre d'import pour choisir le bon dossier - pas besoin de modifier de fichier à la main.
 
 **Tu n'utilises pas Hevy ?** Le bouton "➕ Ajouter une séance" dans `🏋️ Sport.md` permet de saisir une séance directement dans la note (titre, date, durée, exercices/séries optionnels). Ces séances manuelles sont éditables et supprimables (✏️/🗑️), contrairement aux séances importées depuis Hevy, et apparaissent avec un badge "Manuel" pour les distinguer.
+
+---
+
+## 🍳 Module Recettes
+
+Tes recettes de cuisine, organisées en `Plats/`, `Desserts/`, `Petit déjeuner/`, `Collations & Goûters/` et `Autres/` (Entrée, Boisson, Autre) dans `2 - Domaines/Recettes/`.
+
+**Créer une recette :** `Ctrl+P` → QuickAdd → `🍳 Nouvelle recette` → choisis la catégorie → tape le nom.
+
+Les fiches s'ouvrent **en lecture seule** par défaut (bouton `✏️ Modifier` en haut à droite pour débloquer l'édition, `✅ Terminé` pour repasser en lecture seule) afin d'éviter de modifier ou supprimer un élément par erreur en consultant simplement la recette. Le mode Modifier reste actif tant que tu n'as pas cliqué sur "Terminé", même en enchaînant plusieurs ajouts/suppressions.
+
+Renseigne le champ **portions** pour activer le calculateur de portions à côté de "🥘 Ingrédients" (boutons −/+) : les quantités de chaque ingrédient se recalculent automatiquement. Contrairement au reste, il reste actif même en lecture seule puisqu'il ne change que l'affichage, jamais la recette enregistrée.
+
+Un champ **Macros** (🔥, texte libre) s'affiche juste sous le titre, et une section **📝 Note** en bas de fiche permet d'écrire une remarque personnelle - les deux sont éditables uniquement en mode Modifier.
+
+Toutes tes recettes sont visibles dans le **MOC - Recettes** avec galerie, filtres (Plats / Desserts / Petit déj / Collations / Meilleures notes) et barre de recherche.
 
 ---
 

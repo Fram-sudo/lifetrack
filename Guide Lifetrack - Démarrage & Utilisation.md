@@ -17,12 +17,13 @@
 9. [Romans et Livres](#9--romans-et-livres)
 10. [Jeux Vidéo](#10--jeux-vidéo)
 11. [Commandes](#11--commandes)
-12. [Sport](#12--sport)
-13. [Finances](#13--finances)
-14. [Statistiques](#14--statistiques)
-15. [Explorateur](#15--explorateur)
-16. [Raccourcis clavier](#16--raccourcis-clavier)
-17. [Problèmes courants](#17--problèmes-courants)
+12. [Recettes](#12--recettes)
+13. [Sport](#13--sport)
+14. [Finances](#14--finances)
+15. [Statistiques](#15--statistiques)
+16. [Explorateur](#16--explorateur)
+17. [Raccourcis clavier](#17--raccourcis-clavier)
+18. [Problèmes courants](#18--problèmes-courants)
 
 ---
 
@@ -350,7 +351,43 @@ La commande apparaît dans le **MOC Commandes** avec un code couleur selon son s
 
 ---
 
-## 12 - Sport
+## 12 - Recettes
+
+Tes recettes de cuisine, organisées dans `2 - Domaines/Recettes/` en `Plats/`, `Desserts/`, `Petit déjeuner/`, `Collations & Goûters/` et `Autres/` (Entrée, Boisson, Autre).
+
+### Créer une recette
+
+1. Appuie sur `Ctrl+Q`
+2. Sélectionne **🍳 Nouvelle recette** → choisis la catégorie (🍽 Plat, 🍰 Dessert, 🥐 Petit déjeuner, 🍪 Collation-Goûter, 🍴 Autres)
+3. Si tu choisis "Autres", une popup demande la sous-catégorie (Entrée, Boisson, Autre)
+4. Tape le nom de la recette → Entrée
+
+**Exemple concret :** je veux enregistrer ma recette de crêpes.
+
+- `Ctrl+Q` → 🍳 Nouvelle recette → 🍰 Dessert → tape "Crêpes sucrées" → Entrée
+- La fiche s'ouvre dans `2 - Domaines/Recettes/Desserts/`, en lecture seule
+
+### Mode lecture / édition
+
+La fiche s'ouvre **en lecture seule** par défaut (aucun badge cliquable, pas de croix de suppression) pour éviter de modifier ou supprimer quelque chose par erreur en la consultant simplement. Clique sur **✏️ Modifier** en haut à droite pour débloquer l'édition, puis sur **✅ Terminé** pour repasser en lecture seule.
+
+En mode Modifier : clique sur les badges (difficulté, temps, portions, note, catégorie) pour les modifier directement, utilise les boutons **➕ Ingrédient** et **➕ Étape** pour ajouter des éléments, et les croix pour en supprimer. Le mode Modifier reste actif tant que tu n'as pas cliqué sur "Terminé", même en enchaînant plusieurs ajouts/suppressions.
+
+### Calculateur de portions
+
+Une fois le champ **portions** renseigné, un calculateur apparaît à côté de "🥘 Ingrédients" (boutons −/+) : les quantités de chaque ingrédient se recalculent automatiquement (ex : 250g de farine → 375g pour 6 portions au lieu de 4). Il **reste actif même en lecture seule** puisqu'il ne change que l'affichage, jamais la recette enregistrée. Bouton ↺ pour revenir aux portions d'origine.
+
+### Macros et note personnelle
+
+En mode Modifier, clique juste sous le titre (🔥) pour renseigner les **macros** en texte libre (ex : "320 kcal - 25g protéines - 40g glucides - 10g lipides") - masqué en lecture seule tant que rien n'est renseigné. Tout en bas de la fiche, la section **📝 Note** te permet d'écrire une remarque personnelle (variante, astuce, retour d'expérience) via le bouton **+ Ajouter une note**.
+
+### Retrouver tes recettes
+
+Le **MOC - Recettes** affiche toutes tes recettes en galerie, avec filtres (Plats / Desserts / Petit déj / Collations / Meilleures notes) et une barre de recherche.
+
+---
+
+## 13 - Sport
 
 Le dashboard `2 - Domaines/Sport/🏋️ Sport.md` suit tes séances de musculation, importées depuis l'application [Hevy](https://www.hevyapp.com/) ou saisies directement dans la note.
 
@@ -384,7 +421,7 @@ Ces séances vont dans un fichier à part (`manuel_<année>.json`) et n'interfè
 
 ---
 
-## 13 - Finances
+## 14 - Finances
 
 ### Premier démarrage - configurer un compte
 
@@ -539,7 +576,7 @@ Le bouton 🙈 masque tous les montants. Pratique si tu utilises Lifetrack en pu
 
 ---
 
-## 14 - Statistiques
+## 15 - Statistiques
 
 La page **📊 Statistiques** (accessible depuis le Dashboard) centralise toute ton activité.
 
@@ -569,7 +606,7 @@ Clique sur **🔍 Vue individuelle**, tape un titre → les statistiques de ce m
 
 ---
 
-## 15 - Explorateur
+## 16 - Explorateur
 
 La page **🔍 Explorateur** permet de chercher dans tout le vault.
 
@@ -590,7 +627,7 @@ Clique sur **⚙ Filtres** pour affiner :
 
 ---
 
-## 16 - Raccourcis clavier
+## 17 - Raccourcis clavier
 
 | Raccourci | Action |
 |-----------|--------|
@@ -608,7 +645,7 @@ Clique sur **⚙ Filtres** pour affiner :
 
 ---
 
-## 17 - Problèmes courants
+## 18 - Problèmes courants
 
 **Le Dashboard ou les MOCs n'affichent rien**
 → Paramètres → Dataview → vérifie que **Enable DataviewJS** et **Enable Inline DataviewJS** sont activés. Recharge avec `Ctrl+R`.

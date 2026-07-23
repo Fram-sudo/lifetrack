@@ -170,6 +170,148 @@
       ]
     },
     {
+      "id": "recette-multi",
+      "name": "🍳 Nouvelle recette",
+      "type": "Multi",
+      "choices": [
+        {
+          "id": "qa-recette-plat",
+          "name": "🍽 Plat",
+          "type": "Template",
+          "templatePath": "_Système/Templates/TPL - Recette.md",
+          "fileNameFormat": {
+            "enabled": true,
+            "format": "{{VALUE}}"
+          },
+          "folder": {
+            "enabled": true,
+            "folders": [
+              "2 - Domaines/Recettes/Plats"
+            ]
+          },
+          "openFile": true,
+          "appendLink": false,
+          "openFileInNewTab": {
+            "enabled": false
+          },
+          "fileOpening": {
+            "location": "tab",
+            "direction": "vertical",
+            "focus": true,
+            "mode": "default"
+          }
+        },
+        {
+          "id": "qa-recette-dessert",
+          "name": "🍰 Dessert",
+          "type": "Template",
+          "templatePath": "_Système/Templates/TPL - Recette.md",
+          "fileNameFormat": {
+            "enabled": true,
+            "format": "{{VALUE}}"
+          },
+          "folder": {
+            "enabled": true,
+            "folders": [
+              "2 - Domaines/Recettes/Desserts"
+            ]
+          },
+          "openFile": true,
+          "appendLink": false,
+          "openFileInNewTab": {
+            "enabled": false
+          },
+          "fileOpening": {
+            "location": "tab",
+            "direction": "vertical",
+            "focus": true,
+            "mode": "default"
+          }
+        },
+        {
+          "id": "qa-recette-petit-dejeuner",
+          "name": "🥐 Petit déjeuner",
+          "type": "Template",
+          "templatePath": "_Système/Templates/TPL - Recette.md",
+          "fileNameFormat": {
+            "enabled": true,
+            "format": "{{VALUE}}"
+          },
+          "folder": {
+            "enabled": true,
+            "folders": [
+              "2 - Domaines/Recettes/Petit déjeuner"
+            ]
+          },
+          "openFile": true,
+          "appendLink": false,
+          "openFileInNewTab": {
+            "enabled": false
+          },
+          "fileOpening": {
+            "location": "tab",
+            "direction": "vertical",
+            "focus": true,
+            "mode": "default"
+          }
+        },
+        {
+          "id": "qa-recette-collation",
+          "name": "🍪 Collation, Goûter",
+          "type": "Template",
+          "templatePath": "_Système/Templates/TPL - Recette.md",
+          "fileNameFormat": {
+            "enabled": true,
+            "format": "{{VALUE}}"
+          },
+          "folder": {
+            "enabled": true,
+            "folders": [
+              "2 - Domaines/Recettes/Collations & Goûters"
+            ]
+          },
+          "openFile": true,
+          "appendLink": false,
+          "openFileInNewTab": {
+            "enabled": false
+          },
+          "fileOpening": {
+            "location": "tab",
+            "direction": "vertical",
+            "focus": true,
+            "mode": "default"
+          }
+        },
+        {
+          "id": "qa-recette-autres",
+          "name": "🍴 Autres",
+          "type": "Template",
+          "templatePath": "_Système/Templates/TPL - Recette.md",
+          "fileNameFormat": {
+            "enabled": true,
+            "format": "{{VALUE}}"
+          },
+          "folder": {
+            "enabled": true,
+            "folders": [
+              "2 - Domaines/Recettes/Autres"
+            ]
+          },
+          "openFile": true,
+          "appendLink": false,
+          "openFileInNewTab": {
+            "enabled": false
+          },
+          "fileOpening": {
+            "location": "tab",
+            "direction": "vertical",
+            "focus": true,
+            "mode": "default"
+          }
+        }
+      ]
+    },
+    {
       "id": "qa-commande",
       "name": "🛒 Nouvelle commande",
       "type": "Template",
