@@ -14,7 +14,7 @@ obsidianUIMode: preview
 
 ```dataviewjs
 // ════════════════════════════════════════════════════════════════
-// 🏋️ SPORT - Suivi performances (import Hevy)
+// 🏋️ SPORT - Suivi performances (import Hevy + ajout manuel)
 // ════════════════════════════════════════════════════════════════
 
 const SPORT_DIR = "2 - Domaines/Sport/Data"
@@ -41,20 +41,64 @@ const fmtVol = kg => kg >= 1000 ? (kg/1000).toFixed(1).replace(/\.0$/,'') + ' t'
 const workingSets = ex => (ex.sets||[]).filter(s => s.type !== 'warmup')
 const workoutVolume = w => (w.exercises||[]).reduce((sum,ex) =>
   sum + workingSets(ex).reduce((s2,st) => s2 + (st.weight_kg||0)*(st.reps||0), 0), 0)
+const slug = s => (s||'').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/[^a-z0-9]+/g,'-').replace(/^-+|-+$/g,'')
 
-// ── LOAD DATA ────────────────────────────────────────────────────
+// ── LOAD DATA (Hevy + saisie manuelle) ─────────────────────────────
 const loadWorkouts = async () => {
   const ws = []
   const files = app.vault.getFiles().filter(f =>
-    f.path.startsWith(SPORT_DIR + '/') && /^hevy_\d{4}\.json$/.test(f.name)
+    f.path.startsWith(SPORT_DIR + '/') && /^(hevy|manuel)_\d{4}\.json$/.test(f.name)
   )
   for (const f of files.sort((a,b) => a.name < b.name ? -1 : 1)) {
-    try { ws.push(...JSON.parse(await app.vault.read(f))) } catch(e) {}
+    try {
+      const arr = JSON.parse(await app.vault.read(f))
+      const source = f.name.startsWith('manuel_') ? 'manuel' : 'hevy'
+      for (const w of arr) w._source = source
+      ws.push(...arr)
+    } catch(e) {}
   }
   return ws.sort((a,b) => a.date < b.date ? -1 : 1)
 }
 
-const ALL = await loadWorkouts()
+// ── Persistance des séances ajoutées manuellement ───────────────────
+const manualFilePath = year => `${SPORT_DIR}/manuel_${year}.json`
+
+const loadManualYear = async year => {
+  const f = app.vault.getAbstractFileByPath(manualFilePath(year))
+  if (!f) return []
+  try { return JSON.parse(await app.vault.read(f)) } catch(e) { return [] }
+}
+
+const saveManualYear = async (year, arr) => {
+  const path = manualFilePath(year)
+  const content = JSON.stringify(arr, null, 2)
+  const existing = app.vault.getAbstractFileByPath(path)
+  if (existing) { await app.vault.modify(existing, content); return }
+  if (!app.vault.getAbstractFileByPath(SPORT_DIR)) { try { await app.vault.createFolder(SPORT_DIR) } catch(e) {} }
+  await app.vault.create(path, content)
+}
+
+// Ajoute ou met à jour une séance manuelle (déplace de fichier si l'année a changé)
+const addOrUpdateManualWorkout = async (workout, previousYear) => {
+  const year = workout.date.slice(0,4)
+  if (previousYear && previousYear !== year) {
+    const oldArr = await loadManualYear(previousYear)
+    await saveManualYear(previousYear, oldArr.filter(w => w.id !== workout.id))
+  }
+  const arr = await loadManualYear(year)
+  const idx = arr.findIndex(w => w.id === workout.id)
+  if (idx >= 0) arr[idx] = workout; else arr.push(workout)
+  arr.sort((a,b) => a.date < b.date ? -1 : 1)
+  await saveManualYear(year, arr)
+}
+
+const deleteManualWorkout = async workout => {
+  const year = workout.date.slice(0,4)
+  const arr = await loadManualYear(year)
+  await saveManualYear(year, arr.filter(w => w.id !== workout.id))
+}
+
+let ALL = await loadWorkouts()
 const today = localStr(new Date())
 const YEAR = new Date().getFullYear()
 const thisWeek = getWeekMon(today)
@@ -67,8 +111,11 @@ const MUTED    = cs.getPropertyValue('--text-muted').trim()           || '#888'
 const BORDER   = cs.getPropertyValue('--background-modifier-border').trim() || '#e0e0e0'
 const SPORT_C  = '#40a02b'
 const YELLOW_C = '#c4943a'
+const HEVY_C   = '#1e66f5'
 const HM_SCALE = ['#1a4a1a','#276b27','#358f35','#40a02b','#5fd13a']
 const HM_EMPTY = 'var(--background-modifier-border)'
+const INPUT_STYLE = 'width:100%;padding:7px 9px;border-radius:7px;border:1px solid var(--background-modifier-border);background:var(--background-primary);color:var(--text-normal);font-size:0.85em;box-sizing:border-box;'
+const SMALL_INPUT_STYLE = INPUT_STYLE
 
 // ── STATE ─────────────────────────────────────────────────────────
 if (!window._SPORT_STATE) window._SPORT_STATE = { tab: 'apercu', exercise: null, progMode: 'volume' }
@@ -79,48 +126,28 @@ const isMobile = window.innerWidth < 700
 const root = dv.el('div', '')
 root.empty()
 
-// ── EMPTY STATE ───────────────────────────────────────────────────
-if (!ALL.length) {
+// ── EMPTY STATE (réutilisable) ──────────────────────────────────────
+const renderEmptyState = () => {
+  root.empty()
   const empty = root.createDiv()
   empty.style.cssText = 'text-align:center;padding:60px 20px;color:var(--text-muted);'
   empty.innerHTML = `
     <div style="font-size:3em;margin-bottom:14px;">🏋️</div>
-    <div style="font-size:1.1em;font-weight:700;margin-bottom:8px;color:var(--text-normal);">Aucune séance importée</div>
-    <div style="font-size:0.85em;">Lance <code>import_hevy.py</code> pour importer ton export CSV Hevy,<br>ou <code>lancer_hevy.sh</code> depuis ton terminal.</div>
+    <div style="font-size:1.1em;font-weight:700;margin-bottom:8px;color:var(--text-normal);">Aucune séance enregistrée</div>
+    <div style="font-size:0.85em;">Lance <code>import_hevy.py</code> pour importer ton export CSV Hevy,<br>ou ajoute une séance manuellement ci-dessous.</div>
   `
-  return
+  const btnWrap = empty.createDiv(); btnWrap.style.cssText = 'margin-top:16px;'
+  const addBtn = btnWrap.createEl('button')
+  addBtn.textContent = '➕ Ajouter une séance'
+  addBtn.style.cssText = `padding:9px 18px;border-radius:8px;border:none;background:${SPORT_C};color:#fff;cursor:pointer;font-size:0.88em;font-weight:700;`
+  addBtn.onclick = () => openWorkoutModal(null)
 }
 
-// ── CALCULS GLOBAUX ──────────────────────────────────────────────
-const lastW = ALL[ALL.length - 1]
-const daysAgo = daysBetween(lastW.date, today)
-const sessMonth = ALL.filter(w => w.date.slice(0,7) === thisMonth).length
-const sessWeek  = ALL.filter(w => getWeekMon(w.date) === thisWeek).length
-const totalVolume = ALL.reduce((s,w) => s + workoutVolume(w), 0)
+if (!ALL.length) { renderEmptyState() }
 
-// Streak semaines consécutives
-const weekSet = new Set(ALL.map(w => getWeekMon(w.date)))
-let streak = 0, chk = new Date(thisWeek + 'T12:00:00')
-while (true) {
-  const wk = localStr(chk)
-  if (!weekSet.has(wk)) break
-  streak++; chk.setDate(chk.getDate() - 7)
-}
+// ── CALCULS GLOBAUX (recalculés après ajout/édition/suppression) ────
+let lastW, daysAgo, sessMonth, sessWeek, totalVolume, streak, exMap, allExercises, volByDay
 
-// Tous les exercices triés par fréquence (nb de séances où ils apparaissent)
-const exMap = {}
-for (const w of ALL)
-  for (const ex of w.exercises||[])
-    exMap[ex.name] = (exMap[ex.name]||0) + 1
-const allExercises = Object.entries(exMap).sort((a,b)=>b[1]-a[1]).map(([n])=>n)
-if (!window._SPORT_STATE.exercise && allExercises.length)
-  window._SPORT_STATE.exercise = allExercises[0]
-
-// Volume par jour (pour la heatmap)
-const volByDay = {}
-for (const w of ALL) volByDay[w.date] = (volByDay[w.date]||0) + workoutVolume(w)
-
-// Records personnels par exercice (meilleur poids × reps, avec date)
 const computePR = name => {
   let best = null
   for (const w of ALL) {
@@ -136,8 +163,224 @@ const computePR = name => {
   return best
 }
 
+const recompute = () => {
+  ALL.sort((a,b) => a.date < b.date ? -1 : 1)
+  lastW = ALL[ALL.length - 1]
+  daysAgo = lastW ? daysBetween(lastW.date, today) : 0
+  sessMonth = ALL.filter(w => w.date.slice(0,7) === thisMonth).length
+  sessWeek  = ALL.filter(w => getWeekMon(w.date) === thisWeek).length
+  totalVolume = ALL.reduce((s,w) => s + workoutVolume(w), 0)
+
+  const weekSet = new Set(ALL.map(w => getWeekMon(w.date)))
+  streak = 0
+  let chk = new Date(thisWeek + 'T12:00:00')
+  while (true) {
+    const wk = localStr(chk)
+    if (!weekSet.has(wk)) break
+    streak++; chk.setDate(chk.getDate() - 7)
+  }
+
+  exMap = {}
+  for (const w of ALL)
+    for (const ex of w.exercises||[])
+      exMap[ex.name] = (exMap[ex.name]||0) + 1
+  allExercises = Object.entries(exMap).sort((a,b)=>b[1]-a[1]).map(([n])=>n)
+  if (!window._SPORT_STATE.exercise && allExercises.length)
+    window._SPORT_STATE.exercise = allExercises[0]
+
+  volByDay = {}
+  for (const w of ALL) volByDay[w.date] = (volByDay[w.date]||0) + workoutVolume(w)
+}
+recompute()
+
+// Applique en mémoire un ajout/modification/suppression manuelle (persisté par ailleurs sur disque)
+const applyLocalUpsert = workout => {
+  const idx = ALL.findIndex(w => w.id === workout.id)
+  if (idx >= 0) ALL[idx] = { ...workout, _source: 'manuel' }
+  else ALL.push({ ...workout, _source: 'manuel' })
+  recompute()
+}
+const applyLocalDelete = id => {
+  ALL = ALL.filter(w => w.id !== id)
+  recompute()
+}
+
+// ══ MODALE D'AJOUT / ÉDITION DE SÉANCE ══════════════════════════════
+const openWorkoutModal = (existing) => {
+  const isEdit = !!existing
+  const previousYear = existing ? existing.date.slice(0,4) : null
+
+  const state = existing ? {
+    id: existing.id,
+    title: existing.title || '',
+    date: existing.date,
+    duration_minutes: existing.duration_minutes || '',
+    exercises: (existing.exercises||[]).map(ex => ({
+      name: ex.name,
+      sets: (ex.sets||[]).map(s => ({ weight_kg: s.weight_kg ?? '', reps: s.reps ?? '' }))
+    }))
+  } : {
+    id: null,
+    title: '',
+    date: today,
+    duration_minutes: '',
+    exercises: [{ name:'', sets:[{weight_kg:'',reps:''}] }]
+  }
+
+  const overlay = document.body.createDiv()
+  overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:9999;display:flex;align-items:center;justify-content:center;padding:16px;'
+  const box = overlay.createDiv()
+  box.style.cssText = 'background:var(--background-primary);border-radius:14px;padding:22px 24px;width:520px;max-width:100%;max-height:88vh;overflow-y:auto;box-shadow:0 12px 50px rgba(0,0,0,0.4);'
+  box.createEl('h3',{attr:{style:'margin:0 0 16px;font-size:1em;font-weight:800;color:var(--text-normal);'}}).textContent = isEdit ? '✏️ Modifier la séance' : '➕ Nouvelle séance'
+
+  // datalist pour l'autocomplétion des noms d'exercices
+  const dlId = 'sport-manuel-exercises-list'
+  let dl = document.getElementById(dlId)
+  if (dl) dl.remove()
+  dl = document.body.createEl('datalist'); dl.id = dlId
+  for (const name of allExercises) dl.createEl('option',{attr:{value:name}})
+
+  const mkField = (parent, label) => {
+    const w = parent.createDiv()
+    w.createEl('div',{attr:{style:'font-size:0.72em;color:var(--text-muted);margin-bottom:3px;font-weight:600;'}}).textContent = label
+    return w
+  }
+
+  const row2 = box.createDiv(); row2.style.cssText='display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px;'
+  const fTitre = mkField(row2, 'Titre')
+  const inpTitre = fTitre.createEl('input',{attr:{type:'text',value:state.title,placeholder:'ex. Jambes, Course à pied…',style:INPUT_STYLE}})
+  const fDate = mkField(row2, 'Date')
+  const inpDate = fDate.createEl('input',{attr:{type:'date',value:state.date,style:INPUT_STYLE}})
+
+  const fDur = mkField(box, 'Durée (minutes, optionnel)')
+  fDur.style.marginBottom = '12px'
+  const inpDur = fDur.createEl('input',{attr:{type:'number',min:'0',value:String(state.duration_minutes),placeholder:'ex. 45',style:INPUT_STYLE}})
+
+  box.createEl('div',{attr:{style:'font-size:0.72em;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.04em;font-weight:700;margin:16px 0 8px;'}}).textContent='Exercices (optionnel)'
+  const exContainer = box.createDiv()
+
+  const renderExercises = () => {
+    exContainer.empty()
+    state.exercises.forEach((ex, exIdx) => {
+      const exBlock = exContainer.createDiv()
+      exBlock.style.cssText = `background:var(--background-secondary);border-radius:10px;padding:12px;margin-bottom:10px;border-left:3px solid ${SPORT_C};`
+      const hdrRow = exBlock.createDiv(); hdrRow.style.cssText='display:flex;gap:8px;align-items:center;margin-bottom:8px;'
+      const nameInp = hdrRow.createEl('input',{attr:{type:'text',value:ex.name,placeholder:"Nom de l'exercice…",list:dlId,style:INPUT_STYLE+'flex:1;'}})
+      nameInp.oninput = () => { ex.name = nameInp.value }
+      const rmExBtn = hdrRow.createEl('button')
+      rmExBtn.textContent='✕'
+      rmExBtn.style.cssText='background:none;border:none;color:#d20f39;cursor:pointer;font-size:0.95em;padding:2px 6px;'
+      rmExBtn.onclick = () => { state.exercises.splice(exIdx,1); renderExercises() }
+
+      ex.sets.forEach((s, sIdx) => {
+        const setRow = exBlock.createDiv()
+        setRow.style.cssText='display:grid;grid-template-columns:20px 1fr 1fr 22px;gap:6px;align-items:center;margin-bottom:6px;'
+        setRow.createEl('span',{attr:{style:'font-size:0.72em;color:var(--text-muted);text-align:center;'}}).textContent = String(sIdx+1)
+        const wInp = setRow.createEl('input',{attr:{type:'number',step:'0.5',min:'0',placeholder:'Poids (kg)',value:String(s.weight_kg),style:SMALL_INPUT_STYLE}})
+        wInp.oninput = () => { s.weight_kg = wInp.value }
+        const rInp = setRow.createEl('input',{attr:{type:'number',min:'0',placeholder:'Reps',value:String(s.reps),style:SMALL_INPUT_STYLE}})
+        rInp.oninput = () => { s.reps = rInp.value }
+        const rmSetBtn = setRow.createEl('button')
+        rmSetBtn.textContent='✕'
+        rmSetBtn.style.cssText='background:none;border:none;color:var(--text-muted);cursor:pointer;'
+        rmSetBtn.onclick = () => { ex.sets.splice(sIdx,1); renderExercises() }
+      })
+      const addSetBtn = exBlock.createEl('button')
+      addSetBtn.textContent='+ Ajouter une série'
+      addSetBtn.style.cssText='font-size:0.75em;color:var(--interactive-accent);background:none;border:none;cursor:pointer;font-weight:700;padding:2px 0;'
+      addSetBtn.onclick = () => { ex.sets.push({weight_kg:'',reps:''}); renderExercises() }
+    })
+  }
+  renderExercises()
+
+  const addExBtn = box.createEl('button')
+  addExBtn.textContent='+ Ajouter un exercice'
+  addExBtn.style.cssText='width:100%;padding:8px;border-radius:8px;border:1px dashed var(--background-modifier-border);background:none;color:var(--text-muted);cursor:pointer;font-size:0.82em;margin-bottom:14px;'
+  addExBtn.onclick = () => { state.exercises.push({name:'',sets:[{weight_kg:'',reps:''}]}); renderExercises() }
+
+  const actions = box.createDiv(); actions.style.cssText='display:flex;justify-content:flex-end;gap:8px;margin-top:6px;'
+  const cancelBtn = actions.createEl('button')
+  cancelBtn.textContent='Annuler'
+  cancelBtn.style.cssText='padding:8px 16px;border-radius:8px;border:none;background:var(--background-secondary);color:var(--text-normal);cursor:pointer;font-size:0.85em;font-weight:600;'
+  cancelBtn.onclick = () => overlay.remove()
+
+  const saveBtn = actions.createEl('button')
+  saveBtn.textContent='Enregistrer'
+  saveBtn.style.cssText=`padding:8px 16px;border-radius:8px;border:none;background:${SPORT_C};color:#fff;cursor:pointer;font-size:0.85em;font-weight:700;`
+  saveBtn.onclick = async () => {
+    const title = inpTitre.value.trim() || 'Séance'
+    const date = inpDate.value || today
+    const dur = parseInt(inpDur.value) || 0
+
+    const exercises = state.exercises
+      .filter(ex => ex.name.trim())
+      .map(ex => ({
+        name: ex.name.trim(),
+        sets: ex.sets
+          .filter(s => s.weight_kg !== '' || s.reps !== '')
+          .map((s,i) => ({
+            index: i, type: 'normal',
+            weight_kg: parseFloat(s.weight_kg) || 0,
+            reps: parseInt(s.reps) || 0,
+            rpe: null, duration_seconds: null
+          }))
+      }))
+      .filter(ex => ex.sets.length)
+
+    const id = state.id || `${date}_manuel_${slug(title)}_${Math.random().toString(36).slice(2,7)}`
+    const toSave = { id, title, date, start_time:'', end_time:'', duration_minutes: dur, exercises }
+
+    saveBtn.disabled = true; saveBtn.textContent = 'Enregistrement…'
+    try {
+      await addOrUpdateManualWorkout(toSave, previousYear)
+      applyLocalUpsert(toSave)
+      new Notice(isEdit ? 'Séance mise à jour !' : 'Séance ajoutée !', 2500)
+      overlay.remove()
+      renderAll()
+    } catch(e) {
+      new Notice("Erreur lors de l'enregistrement : " + e.message, 4000)
+      saveBtn.disabled = false; saveBtn.textContent = 'Enregistrer'
+    }
+  }
+
+  overlay.onclick = e => { if (e.target===overlay) overlay.remove() }
+}
+
+// Supprime une séance manuelle (avec confirmation)
+const confirmDeleteWorkout = async workout => {
+  const overlay = document.body.createDiv()
+  overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:9999;display:flex;align-items:center;justify-content:center;padding:16px;'
+  const box = overlay.createDiv()
+  box.style.cssText = 'background:var(--background-primary);border-radius:14px;padding:20px 22px;width:360px;max-width:100%;box-shadow:0 12px 50px rgba(0,0,0,0.4);'
+  box.createEl('div',{attr:{style:'font-weight:700;color:var(--text-normal);margin-bottom:6px;'}}).textContent='Supprimer cette séance ?'
+  box.createEl('div',{attr:{style:'font-size:0.85em;color:var(--text-muted);margin-bottom:16px;'}}).textContent = `${workout.title || 'Séance'} — ${fmtDateFr(workout.date)}`
+  const actions = box.createDiv(); actions.style.cssText='display:flex;justify-content:flex-end;gap:8px;'
+  const cancelBtn = actions.createEl('button')
+  cancelBtn.textContent='Annuler'
+  cancelBtn.style.cssText='padding:7px 14px;border-radius:8px;border:none;background:var(--background-secondary);color:var(--text-normal);cursor:pointer;font-size:0.85em;font-weight:600;'
+  cancelBtn.onclick = () => overlay.remove()
+  const delBtn = actions.createEl('button')
+  delBtn.textContent='Supprimer'
+  delBtn.style.cssText='padding:7px 14px;border-radius:8px;border:none;background:#d20f39;color:#fff;cursor:pointer;font-size:0.85em;font-weight:700;'
+  delBtn.onclick = async () => {
+    delBtn.disabled = true; delBtn.textContent = 'Suppression…'
+    try {
+      await deleteManualWorkout(workout)
+      applyLocalDelete(workout.id)
+      new Notice('Séance supprimée.', 2000)
+      overlay.remove()
+      if (!ALL.length) renderEmptyState(); else renderAll()
+    } catch(e) {
+      new Notice('Erreur lors de la suppression : ' + e.message, 4000)
+      delBtn.disabled = false; delBtn.textContent = 'Supprimer'
+    }
+  }
+  overlay.onclick = e => { if (e.target===overlay) overlay.remove() }
+}
+
 // ── RENDU PRINCIPAL ───────────────────────────────────────────────
 const renderAll = () => {
+  if (!ALL.length) { renderEmptyState(); return }
   root.empty()
 
   // ── HEADER STATS ──────────────────────────────────────────────
@@ -160,9 +403,12 @@ const renderAll = () => {
   const lastLabel = daysAgo === 0 ? "Aujourd'hui" : daysAgo === 1 ? 'Hier' : `il y a ${daysAgo}j`
   statCard('🕒','Dernière', lastLabel, fmtDateFr(lastW.date))
 
-  // ── TABS ──────────────────────────────────────────────────────
-  const tabBar = root.createDiv()
-  tabBar.style.cssText = 'display:flex;gap:2px;margin-bottom:16px;border-bottom:1px solid var(--background-modifier-border);'
+  // ── TABS + AJOUT ─────────────────────────────────────────────────
+  const tabBarRow = root.createDiv()
+  tabBarRow.style.cssText = 'display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:16px;border-bottom:1px solid var(--background-modifier-border);flex-wrap:wrap;'
+
+  const tabBar = tabBarRow.createDiv()
+  tabBar.style.cssText = 'display:flex;gap:2px;'
 
   for (const [id, label] of [['apercu','📊 Aperçu'],['progression','📈 Progression'],['records','🏆 Records'],['seances','📋 Séances']]) {
     const active = window._SPORT_STATE.tab === id
@@ -171,6 +417,11 @@ const renderAll = () => {
     btn.style.cssText = `padding:7px 16px;border:none;background:none;cursor:pointer;font-size:0.88em;font-weight:600;margin-bottom:-1px;border-bottom:2px solid ${active?ACCENT:'transparent'};color:${active?ACCENT:'var(--text-muted)'};transition:color .15s;`
     btn.onclick = () => { window._SPORT_STATE.tab = id; renderAll() }
   }
+
+  const addBtn = tabBarRow.createEl('button')
+  addBtn.textContent = '➕ Ajouter une séance'
+  addBtn.style.cssText = `padding:6px 14px;border-radius:7px;border:none;background:${SPORT_C};color:#fff;cursor:pointer;font-size:0.8em;font-weight:700;margin-bottom:6px;white-space:nowrap;`
+  addBtn.onclick = () => openWorkoutModal(null)
 
   const content = root.createDiv()
   if (window._SPORT_STATE.tab === 'apercu')      renderApercu(content)
@@ -467,14 +718,17 @@ const renderSeances = cnt => {
   const recent = [...ALL].reverse().slice(0, 25)
 
   for (const w of recent) {
+    const isManual = w._source === 'manuel'
     const card = cnt.createDiv()
     card.style.cssText = 'background:var(--background-secondary);border-radius:10px;padding:13px 15px;margin-bottom:9px;'
 
     const hdr = card.createDiv()
-    hdr.style.cssText = 'display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:7px;'
+    hdr.style.cssText = 'display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:7px;gap:8px;'
 
     const left = hdr.createDiv()
-    left.createEl('div',{attr:{style:'font-size:0.93em;font-weight:700;color:var(--text-normal);'}}).textContent = w.title || 'Séance'
+    const titleRow = left.createDiv(); titleRow.style.cssText='display:flex;align-items:center;gap:7px;flex-wrap:wrap;'
+    titleRow.createEl('span',{attr:{style:'font-size:0.93em;font-weight:700;color:var(--text-normal);'}}).textContent = w.title || 'Séance'
+    titleRow.createEl('span',{attr:{style:`font-size:0.65em;font-weight:700;padding:1px 7px;border-radius:9px;color:#fff;background:${isManual?YELLOW_C:HEVY_C};`}}).textContent = isManual ? 'Manuel' : 'Hevy'
     const meta = left.createDiv()
     meta.style.cssText = 'display:flex;gap:10px;margin-top:2px;flex-wrap:wrap;'
     meta.createEl('span',{attr:{style:'font-size:0.75em;color:var(--text-muted);'}}).textContent = fmtDateFr(w.date)
@@ -484,8 +738,22 @@ const renderSeances = cnt => {
     if (vol > 0)
       meta.createEl('span',{attr:{style:'font-size:0.75em;color:var(--text-muted);'}}).textContent = '🏋️ '+fmtVol(vol)
 
+    const rightWrap = hdr.createDiv(); rightWrap.style.cssText='display:flex;align-items:center;gap:6px;flex-shrink:0;'
     const nbEx = (w.exercises||[]).length
-    hdr.createEl('span',{attr:{style:'font-size:0.75em;color:var(--text-muted);background:var(--background-primary);padding:2px 8px;border-radius:10px;white-space:nowrap;margin-top:2px;'}}).textContent = nbEx+' exercice'+(nbEx>1?'s':'')
+    if (nbEx > 0)
+      rightWrap.createEl('span',{attr:{style:'font-size:0.75em;color:var(--text-muted);background:var(--background-primary);padding:2px 8px;border-radius:10px;white-space:nowrap;'}}).textContent = nbEx+' exercice'+(nbEx>1?'s':'')
+    if (isManual) {
+      const editBtn = rightWrap.createEl('button')
+      editBtn.textContent = '✏️'
+      editBtn.title = 'Modifier'
+      editBtn.style.cssText = 'background:none;border:none;cursor:pointer;font-size:0.85em;padding:2px 4px;'
+      editBtn.onclick = () => openWorkoutModal(w)
+      const delBtn = rightWrap.createEl('button')
+      delBtn.textContent = '🗑️'
+      delBtn.title = 'Supprimer'
+      delBtn.style.cssText = 'background:none;border:none;cursor:pointer;font-size:0.85em;padding:2px 4px;'
+      delBtn.onclick = () => confirmDeleteWorkout(w)
+    }
 
     const exList = card.createDiv()
     exList.style.cssText = 'display:flex;flex-direction:column;gap:3px;'
@@ -505,6 +773,9 @@ const renderSeances = cnt => {
       else if (maxR > 0) detail.textContent = `${nbS} × - ${maxR} reps`
       else detail.textContent = `${nbS} série${nbS>1?'s':''}`
     }
+    if (!nbEx) {
+      exList.createEl('div',{attr:{style:'font-size:0.78em;color:var(--text-faint);font-style:italic;'}}).textContent = 'Pas de détail d\'exercice pour cette séance.'
+    }
   }
 
   if (ALL.length > 25) {
@@ -515,5 +786,5 @@ const renderSeances = cnt => {
 }
 
 // ── GO ────────────────────────────────────────────────────────────
-renderAll()
+if (ALL.length) renderAll()
 ```
