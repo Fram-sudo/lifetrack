@@ -37,12 +37,16 @@ Avantage : les mises à jour sont plus rapides (voir section [Mise à jour](#-mi
 
 Quand une nouvelle version du vault est disponible, voici la procédure complète pour récupérer les dernières fonctionnalités.
 
+> **Prérequis : Python 3.8 ou supérieur.** Le script de mise à jour est écrit en Python - sans lui, `update.bat`/`update.sh` ne peuvent pas s'exécuter. Télécharge-le sur [python.org](https://www.python.org/downloads/) si ce n'est pas déjà fait (sur Windows, coche bien **"Add Python to PATH"** pendant l'installation). Aucune dépendance supplémentaire (`pip install ...`) n'est nécessaire pour la mise à jour elle-même : uniquement Python.
+
 ### 1. Lancer la mise à jour
 
 - **Windows** : double-clique sur `_Système/Scripts/update.bat`
 - **Linux / Mac** : ouvre un terminal dans `_Système/Scripts/` et lance `./update.sh`
 
 Le script télécharge automatiquement les dernières versions des fichiers système depuis GitHub et les remplace sur ta machine. Il supprime aussi de lui-même les anciens fichiers devenus obsolètes (par exemple d'anciens MOC fusionnés en un seul) - rien à faire de ton côté, rien de personnel n'est jamais touché.
+
+> Si ton vault date d'avant le déplacement de ces scripts, tu as encore `update.bat`/`update.sh` à la racine : lance-les depuis là. Le script signalera un échec sur `update.sh`/`update.bat` à ce premier passage (normal, le temps qu'il se mette lui-même à jour) - relance-le une seconde fois et tout sera en place dans `_Système/Scripts/`.
 
 ### 2. Rafraîchir Obsidian
 
@@ -84,6 +88,7 @@ Les fichiers "système" que je maintiens : scripts d'import, guides, templates, 
 | 🔑 **Ta clé API TMDB** | `_Système/Config.md` n'est jamais écrasé |
 | 📝 **Tes notes personnelles** | Tout ce que tu as écrit toi-même dans le vault |
 | 🗂️ **Tes paramètres Finances** | Frontmatter de `Finances.md` : tes comptes, catégories, soldes initiaux, devise - jamais écrasés |
+| ⚡ **Tes choix QuickAdd personnalisés** | Les nouveaux choix (ex. "Nouvelle recette") sont ajoutés, mais un choix que tu aurais créé ou modifié toi-même n'est jamais touché |
 
 > **En clair :** la mise à jour remplace le "moteur" (scripts, code, guides), mais jamais tes données.
 
@@ -163,8 +168,10 @@ La documentation complète est dans `_Système/TUTO - Import de relevés bancair
 
 ### Prérequis
 
-- Python 3.8 ou supérieur ([télécharger](https://www.python.org/downloads/))
-- Sur Linux : `sudo apt install python3-tk` si tkinter est absent
+Python 3.8+ est nécessaire (voir la section [Mise à jour](#-mise-à-jour) si ce n'est pas déjà fait). En plus de ça :
+
+- Sur Linux : `sudo apt install python3-tk` si tkinter est absent (nécessaire pour la fenêtre du script)
+- Les dépendances propres à l'import (`pdfplumber`, `ttkbootstrap`) s'installent automatiquement au premier lancement
 
 ---
 

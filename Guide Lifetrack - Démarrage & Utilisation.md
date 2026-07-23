@@ -37,14 +37,15 @@ Obsidian est l'application qui fait tourner le vault. Elle est **gratuite** pour
 - Disponible sur Windows, macOS, Linux, iOS et Android
 - Télécharge la version correspondant à ton système et installe-la normalement
 
-### Python 3 (optionnel - uniquement pour l'import de relevés bancaires)
+### Python 3 (recommandé)
 
-Si tu veux importer tes relevés PDF directement dans les Finances plutôt que de tout saisir à la main :
+Techniquement facultatif pour ouvrir et utiliser le vault dans Obsidian, mais nécessaire dès que tu veux lancer un script : la **mise à jour** (`update.bat`/`update.sh`), l'**import Hevy** ou l'**import de relevés bancaires**.
 
 - Site officiel : **https://www.python.org/downloads/**
 - Télécharge Python 3.10 ou version ultérieure
 - Lors de l'installation sur Windows, coche **"Add Python to PATH"**
-- Après installation, ouvre un terminal et tape : `pip install ttkbootstrap`
+
+Aucune dépendance supplémentaire n'est nécessaire pour la mise à jour ou l'import Hevy. Pour l'import de relevés bancaires uniquement, ouvre un terminal et tape : `pip install ttkbootstrap pdfplumber` (ou laisse le script les installer tout seul au premier lancement).
 
 ---
 
