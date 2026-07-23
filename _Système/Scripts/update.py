@@ -76,6 +76,12 @@ FINANCES_MD = "2 - Domaines/Finances/💰 Finances.md"
 # desactiver un plugin que l'utilisateur aurait installe de son cote).
 COMMUNITY_PLUGINS = ".obsidian/community-plugins.json"
 
+# Fichier special : choix QuickAdd fusionnes par id (jamais ecrase en bloc, pour
+# ne pas effacer un choix que l'utilisateur aurait ajoute ou personnalise
+# de son cote). Seuls les choix de premier niveau absents localement sont
+# ajoutes ; un choix deja present (meme id) n'est jamais modifie ni supprime.
+QUICKADD_CONFIG = ".obsidian/plugins/quickadd/data.json"
+
 # ── FICHIERS OBSOLETES ────────────────────────────────────────────
 # Anciens fichiers systeme remplaces par une version fusionnee/renommee.
 # Supprimes uniquement si le fichier de remplacement a ete telecharge avec succes,
@@ -162,6 +168,41 @@ def update_community_plugins(vault, new_content):
     return f"fusionne ({len(added)} nouveau(x) : {', '.join(added)})" if added else "deja a jour"
 
 
+def update_quickadd(vault, new_content):
+    """Ajoute les choix QuickAdd de premier niveau absents localement (par id),
+    sans jamais toucher aux choix deja presents ni au reste de la config
+    (raccourcis clavier, providers IA, etc.) : preserve toute personnalisation
+    que l'utilisateur aurait faite dans son QuickAdd."""
+    import json
+    dest = vault / QUICKADD_CONFIG
+    try:
+        new_data = json.loads(new_content)
+    except Exception:
+        return "contenu distant invalide, ignore"
+    new_choices = new_data.get("choices", [])
+
+    if not dest.exists():
+        dest.parent.mkdir(parents=True, exist_ok=True)
+        dest.write_text(json.dumps(new_data, indent=2, ensure_ascii=False), encoding="utf-8")
+        return "cree"
+
+    try:
+        current_data = json.loads(dest.read_text(encoding="utf-8"))
+    except Exception:
+        return "config locale invalide, ignore"
+
+    current_choices = current_data.get("choices", [])
+    current_ids = {c.get("id") for c in current_choices if isinstance(c, dict)}
+    added = [c for c in new_choices if isinstance(c, dict) and c.get("id") not in current_ids]
+    if not added:
+        return "deja a jour"
+
+    current_data["choices"] = current_choices + added
+    dest.write_text(json.dumps(current_data, indent=2, ensure_ascii=False), encoding="utf-8")
+    names = ", ".join(c.get("name", c.get("id", "?")) for c in added)
+    return f"fusionne ({len(added)} nouveau(x) : {names})"
+
+
 def make_executable(path):
     """Rend un fichier executable (Linux/Mac)."""
     if sys.platform != "win32":
@@ -222,6 +263,16 @@ def main():
     else:
         print(f"  x  {COMMUNITY_PLUGINS}")
         ko.append(COMMUNITY_PLUGINS)
+
+    # QuickAdd (traitement special : fusion par id, jamais ecrase en bloc)
+    content = fetch(QUICKADD_CONFIG)
+    if content:
+        result = update_quickadd(vault, content)
+        print(f"  v  {QUICKADD_CONFIG} ({result})")
+        ok.append(QUICKADD_CONFIG)
+    else:
+        print(f"  x  {QUICKADD_CONFIG}")
+        ko.append(QUICKADD_CONFIG)
 
     # Nettoyage des anciens fichiers remplaces (uniquement si le remplacement a reussi)
     removed = []
