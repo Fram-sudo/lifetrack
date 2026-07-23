@@ -39,8 +39,8 @@ Quand une nouvelle version du vault est disponible, voici la procédure complèt
 
 ### 1. Lancer la mise à jour
 
-- **Windows** : double-clique sur `update.bat` à la racine du vault
-- **Linux / Mac** : ouvre un terminal dans le dossier du vault et lance `./update.sh`
+- **Windows** : double-clique sur `_Système/Scripts/update.bat`
+- **Linux / Mac** : ouvre un terminal dans `_Système/Scripts/` et lance `./update.sh`
 
 Le script télécharge automatiquement les dernières versions des fichiers système depuis GitHub et les remplace sur ta machine. Il supprime aussi de lui-même les anciens fichiers devenus obsolètes (par exemple d'anciens MOC fusionnés en un seul) - rien à faire de ton côté, rien de personnel n'est jamais touché.
 
@@ -125,14 +125,14 @@ lifetrack/
 │   │   ├── bank_configs.json         ← Ta config bancaire (non versionnée)
 │   │   ├── Hevy/                     ← Import des séances Hevy (CSV)
 │   │   ├── QuickAdd/                 ← Scripts QuickAdd (ouverture Dashboard, etc.)
-│   │   └── update.py                 ← Script de mise à jour
+│   │   ├── update.py                 ← Script de mise à jour
+│   │   ├── update.bat                ← Mise à jour Windows
+│   │   └── update.sh                 ← Mise à jour Linux/Mac
 │   ├── Templates/                    ← Templates de notes
 │   ├── MOC/                          ← Maps of Content
 │   ├── Guide Lifetrack.md            ← Documentation complète
 │   └── TUTO - Import de relevés bancaires.md
-├── Dashboard.md                      ← Page d'accueil
-├── update.bat                        ← Mise à jour Windows
-└── update.sh                         ← Mise à jour Linux/Mac
+└── Dashboard.md                      ← Page d'accueil
 ```
 
 ---

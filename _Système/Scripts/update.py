@@ -17,6 +17,8 @@ REPO_RAW = "https://raw.githubusercontent.com/Fram-sudo/lifetrack/main"
 SYSTEM_FILES = [
     # Scripts
     "_Système/Scripts/update.py",
+    "_Système/Scripts/update.sh",
+    "_Système/Scripts/update.bat",
     "_Système/Scripts/import_releves.py",
     "_Système/Scripts/parse_finances.py",
     "_Système/Scripts/create_fiches_medias.py",
@@ -29,9 +31,6 @@ SYSTEM_FILES = [
     "_Système/Scripts/Hevy/lancer_hevy.sh",
     "_Système/Scripts/Hevy/Import Hevy.desktop",
     "_Système/Scripts/Hevy/Import Hevy.bat",
-    # Lanceurs racine
-    "update.sh",
-    "update.bat",
     # Guides
     "_Système/TUTO - Import de relevés bancaires.md",
     "_Système/Guide Lifetrack.md",
@@ -86,6 +85,8 @@ LEGACY_REMOVE = {
         "_Système/MOC/MOC - Films & Animés.md",
         "_Système/MOC/MOC - Séries.md",
     ],
+    "_Système/Scripts/update.sh": ["update.sh"],
+    "_Système/Scripts/update.bat": ["update.bat"],
 }
 
 # Fichiers NE JAMAIS ajouter a SYSTEM_FILES (donnees personnelles / config locale) :
@@ -198,7 +199,6 @@ def main():
     # Rendre les scripts shell/executables
     for sh in ["lancer_import.sh", "update.sh"]:
         make_executable(vault / "_Système/Scripts" / sh)
-    make_executable(vault / "update.sh")
     make_executable(vault / "_Système/Scripts/Hevy/lancer_hevy.sh")
     make_executable(vault / "_Système/Scripts/Hevy/Import Hevy.desktop")
     make_executable(vault / "_Système/Scripts/Import Relevés.desktop")
