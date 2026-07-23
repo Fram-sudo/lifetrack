@@ -182,7 +182,7 @@ Pour importer plusieurs fiches d'un coup, utilise `_Système/Scripts/create_fich
 
 ## 🏋️ Module Sport
 
-Le dashboard `2 - Domaines/Sport/🏋️ Sport.md` affiche tes séances de musculation importées depuis [Hevy](https://www.hevyapp.com/) : rythme d'entraînement, progression par exercice (records), historique des séances.
+Le dashboard `2 - Domaines/Sport/🏋️ Sport.md` affiche tes séances de musculation en 4 onglets : 📊 Aperçu (heatmap annuelle, top exercices), 📈 Progression (graphique volume ou par exercice), 🏆 Records (meilleur poids x reps par exercice), 📋 Séances (historique). Les séances viennent soit d'un import [Hevy](https://www.hevyapp.com/), soit d'une saisie manuelle directement dans la note.
 
 **Import d'un export Hevy :**
 1. Dans l'app Hevy : Profil → ⚙️ Paramètres → Exporter les données (tu reçois un CSV par e-mail)
@@ -190,6 +190,10 @@ Le dashboard `2 - Domaines/Sport/🏋️ Sport.md` affiche tes séances de muscu
    - **Windows** : double-clique sur `_Système/Scripts/Hevy/Import Hevy.bat`
    - **Linux/Mac** : double-clique sur `_Système/Scripts/Hevy/Import Hevy.desktop` ou `lancer_hevy.sh`
 3. Choisis le CSV exporté - l'import se lance automatiquement dès la sélection du fichier, les séances sont fusionnées dans `2 - Domaines/Sport/Data/hevy_<année>.json` (jamais écrasé par les mises à jour)
+
+Si le script n'importe pas dans le bon vault (plusieurs vaults sur ta machine, ou vault déplacé), utilise le bouton "Changer" en haut de la fenêtre d'import pour choisir le bon dossier - pas besoin de modifier de fichier à la main.
+
+**Tu n'utilises pas Hevy ?** Le bouton "➕ Ajouter une séance" dans `🏋️ Sport.md` permet de saisir une séance directement dans la note (titre, date, durée, exercices/séries optionnels). Ces séances manuelles sont éditables et supprimables (✏️/🗑️), contrairement aux séances importées depuis Hevy, et apparaissent avec un badge "Manuel" pour les distinguer.
 
 ---
 

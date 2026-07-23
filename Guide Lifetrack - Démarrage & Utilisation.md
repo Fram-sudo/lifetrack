@@ -352,7 +352,7 @@ La commande apparaît dans le **MOC Commandes** avec un code couleur selon son s
 
 ## 12 - Sport
 
-Le dashboard `2 - Domaines/Sport/🏋️ Sport.md` suit tes séances de musculation importées depuis l'application [Hevy](https://www.hevyapp.com/).
+Le dashboard `2 - Domaines/Sport/🏋️ Sport.md` suit tes séances de musculation, importées depuis l'application [Hevy](https://www.hevyapp.com/) ou saisies directement dans la note.
 
 ### Importer un export Hevy
 
@@ -367,10 +367,19 @@ Exemple : tu viens de faire 3 mois de séances sur Hevy et veux les voir dans Li
 
 Tes séances sont fusionnées dans `2 - Domaines/Sport/Data/hevy_<année>.json`. Réimporter un export qui se chevauche avec des données déjà présentes ne crée pas de doublons.
 
+Le script se trompe de vault (plusieurs vaults, vault déplacé) ? Clique sur **"Changer"** en haut de la fenêtre pour choisir le bon dossier, sans toucher à aucun fichier de config à la main.
+
+### Pas de compte Hevy ? Ajoute tes séances à la main
+
+Clique sur **"➕ Ajouter une séance"** (barre d'onglets ou état vide de `🏋️ Sport.md`) : renseigne titre, date, durée, puis autant d'exercices que tu veux avec leurs séries (poids/reps) - l'autocomplétion te propose les exercices déjà saisis pour rester cohérent.
+
+Ces séances vont dans un fichier à part (`manuel_<année>.json`) et n'interfèrent jamais avec un import Hevy. Depuis l'onglet Séances, elles portent un badge **Manuel** et peuvent être modifiées (✏️) ou supprimées (🗑️) - contrairement aux séances Hevy, qui portent le badge **Hevy** et sont régénérées à chaque import.
+
 ### Lire le dashboard Sport
 
-- **📊 Rythme** - histogramme du nombre de séances par semaine (16 dernières semaines), avec streak (semaines consécutives)
-- **📈 Progression** - sélectionne un exercice (ex : "Développé couché") pour voir la courbe de poids soulevé au fil du temps, avec ton record personnel repéré
+- **📊 Aperçu** - heatmap annuelle du volume soulevé, top exercices, répartition des séances par jour de la semaine
+- **📈 Progression** - vue globale (volume total) ou par exercice (ex : "Développé couché") pour voir la courbe de poids soulevé au fil du temps, avec ton record personnel repéré
+- **🏆 Records** - meilleur poids x reps atteint pour chaque exercice
 - **📋 Séances** - liste détaillée de tes dernières séances : exercices, séries, poids, répétitions
 
 ---

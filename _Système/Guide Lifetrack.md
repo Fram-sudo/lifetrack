@@ -409,7 +409,7 @@ La barre de stats affiche le total de commandes, le montant total dépensé, et 
 
 ## 10 - Sport
 
-Le dashboard `2 - Domaines/Sport/🏋️ Sport.md` affiche tes séances de musculation importées depuis l'application [Hevy](https://www.hevyapp.com/).
+Le dashboard `2 - Domaines/Sport/🏋️ Sport.md` affiche tes séances de musculation, importées depuis l'application [Hevy](https://www.hevyapp.com/) et/ou saisies manuellement.
 
 ### Importer tes séances Hevy
 
@@ -421,10 +421,19 @@ Le dashboard `2 - Domaines/Sport/🏋️ Sport.md` affiche tes séances de muscu
 
 Les séances sont fusionnées dans `2 - Domaines/Sport/Data/hevy_<année>.json` (un fichier par année). Réimporter le même export plusieurs fois ne crée pas de doublons.
 
-### Sections du dashboard Sport
+Si le script se trompe de vault (plusieurs vaults sur ta machine, vault déplacé), clique sur **"Changer"** en haut de la fenêtre d'import pour sélectionner le bon dossier - pas besoin de modifier de fichier à la main.
 
-- **📊 Rythme** - nombre de séances par semaine sur les 16 dernières semaines
-- **📈 Progression** - courbe de progression (poids × reps) pour un exercice donné, avec repérage du record personnel (PR)
+### Ajouter une séance sans Hevy
+
+Pas de compte Hevy ? Clique sur **"➕ Ajouter une séance"** (barre d'onglets ou état vide) pour saisir directement dans la note : titre, date, durée, puis un ou plusieurs exercices avec leurs séries (poids/reps). L'autocomplétion propose les noms d'exercices déjà utilisés pour éviter les doublons (ex : "Développé couché" vs "développé couché").
+
+Ces séances sont enregistrées séparément (`manuel_<année>.json`), donc un futur import Hevy ne les touche jamais. Elles sont éditables et supprimables (✏️/🗑️) depuis l'onglet Séances, contrairement aux séances Hevy (régénérées à chaque import). Un badge **Hevy**/**Manuel** indique la source de chaque séance.
+
+### Onglets du dashboard Sport
+
+- **📊 Aperçu** - heatmap annuelle du volume soulevé, top exercices, répartition par jour de la semaine
+- **📈 Progression** - courbe de progression en volume global ou pour un exercice donné, avec repérage du record personnel (PR)
+- **🏆 Records** - meilleur poids x reps par exercice
 - **📋 Séances** - historique détaillé des dernières séances (exercices, séries, poids, répétitions)
 
 ---
