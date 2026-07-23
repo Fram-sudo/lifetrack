@@ -109,10 +109,11 @@ const cs = getComputedStyle(document.body)
 const ACCENT   = cs.getPropertyValue('--interactive-accent').trim()   || '#1e66f5'
 const MUTED    = cs.getPropertyValue('--text-muted').trim()           || '#888'
 const BORDER   = cs.getPropertyValue('--background-modifier-border').trim() || '#e0e0e0'
-const SPORT_C  = '#40a02b'
+const SPORT_C  = '#d20f39'
+const GAIN_C   = '#40a02b'
 const YELLOW_C = '#c4943a'
 const HEVY_C   = '#1e66f5'
-const HM_SCALE = ['#1a4a1a','#276b27','#358f35','#40a02b','#5fd13a']
+const HM_SCALE = ['#4a1414','#6b1f1f','#93292c','#c23a3a','#f2555a']
 const HM_EMPTY = 'var(--background-modifier-border)'
 const INPUT_STYLE = 'width:100%;padding:7px 9px;border-radius:7px;border:1px solid var(--background-modifier-border);background:var(--background-primary);color:var(--text-normal);font-size:0.85em;box-sizing:border-box;'
 const SMALL_INPUT_STYLE = INPUT_STYLE
@@ -193,6 +194,62 @@ const recompute = () => {
 }
 recompute()
 
+// Sélecteur de date maison (même composant que dans les templates Films/Séries/etc.
+// du vault, pour rester cohérent visuellement avec le reste de Lifetrack en JJ/MM/AAAA)
+const mkDatePicker = (parent, initVal, onChange, placeholder) => {
+  placeholder = placeholder || "Choisir une date"
+  const MFR = ["Janvier","Février","Mars","Avril","Mai","Juin","Juillet","Août","Septembre","Octobre","Novembre","Décembre"]
+  const DFR = ["Lu","Ma","Me","Je","Ve","Sa","Di"]
+  let sel = initVal || ""
+  const fmt = iso => { if (!iso) return placeholder; const [y,m,d] = iso.split("-"); return `${d}/${m}/${y}` }
+  const wrap = parent.createEl("div")
+  const btn = wrap.createEl("button", {attr:{style:"display:flex;align-items:center;gap:8px;width:100%;padding:7px 10px;border-radius:7px;border:1px solid var(--background-modifier-border);background:var(--background-secondary);color:var(--text-normal);font-size:0.9em;box-sizing:border-box;font-family:inherit;cursor:pointer;text-align:left;"}})
+  btn.createEl("span").textContent = "📅"
+  const lbl = btn.createEl("span", {attr:{style:"flex:1;"}})
+  lbl.style.color = sel ? "var(--text-normal)" : "var(--text-muted)"
+  lbl.textContent = sel ? fmt(sel) : placeholder
+  let cal = null
+  btn.onclick = e => {
+    e.stopPropagation()
+    if (cal) { cal.remove(); cal = null; return }
+    const sd = sel ? new Date(sel + "T00:00:00") : new Date()
+    let vY = sd.getFullYear(), vM = sd.getMonth()
+    cal = document.body.createEl("div", {attr:{style:"position:fixed;z-index:10000;background:var(--background-primary);border:1px solid var(--background-modifier-border);border-radius:12px;box-shadow:0 8px 32px rgba(0,0,0,0.25);padding:14px;width:240px;"}})
+    const rect = btn.getBoundingClientRect()
+    cal.style.left = Math.min(rect.left, window.innerWidth - 256) + "px"
+    if (window.innerHeight - rect.bottom > 270) { cal.style.top = (rect.bottom + 6) + "px" }
+    else { cal.style.top = (rect.top - 6) + "px"; cal.style.transform = "translateY(-100%)" }
+    const todayStr = new Date().toISOString().slice(0, 10)
+    const render = () => {
+      cal.empty()
+      const hdr = cal.createEl("div", {attr:{style:"display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;"}})
+      const pb = hdr.createEl("button", {attr:{style:"background:none;border:none;cursor:pointer;color:var(--text-muted);font-size:1.2em;padding:2px 8px;border-radius:5px;"}})
+      pb.textContent = "‹"; pb.onclick = e2 => { e2.stopPropagation(); vM--; if (vM<0){vM=11;vY--}; render() }
+      hdr.createEl("span", {attr:{style:"font-weight:700;font-size:0.88em;"}}).textContent = MFR[vM] + " " + vY
+      const nb = hdr.createEl("button", {attr:{style:"background:none;border:none;cursor:pointer;color:var(--text-muted);font-size:1.2em;padding:2px 8px;border-radius:5px;"}})
+      nb.textContent = "›"; nb.onclick = e2 => { e2.stopPropagation(); vM++; if (vM>11){vM=0;vY++}; render() }
+      const dh = cal.createEl("div", {attr:{style:"display:grid;grid-template-columns:repeat(7,1fr);gap:2px;margin-bottom:4px;"}})
+      DFR.forEach(d => { const c = dh.createEl("div", {attr:{style:"text-align:center;font-size:0.68em;color:var(--text-muted);font-weight:600;padding:2px 0;"}}); c.textContent = d })
+      const g = cal.createEl("div", {attr:{style:"display:grid;grid-template-columns:repeat(7,1fr);gap:3px;"}})
+      const firstDow = (new Date(vY, vM, 1).getDay() + 6) % 7
+      const dim = new Date(vY, vM+1, 0).getDate()
+      for (let i=0; i<firstDow; i++) g.createEl("div")
+      for (let day=1; day<=dim; day++) {
+        const iso = `${vY}-${String(vM+1).padStart(2,"0")}-${String(day).padStart(2,"0")}`
+        const isS = iso===sel, isT = iso===todayStr
+        const c = g.createEl("div", {attr:{style:"text-align:center;padding:5px 2px;border-radius:6px;cursor:pointer;font-size:0.84em;line-height:1;" + (isS ? "background:var(--interactive-accent);color:#fff;font-weight:700;" : isT ? "border:1.5px solid var(--interactive-accent);color:var(--interactive-accent);font-weight:600;" : "")}})
+        c.textContent = day
+        if (!isS) { c.onmouseenter = () => { c.style.background="var(--background-secondary)" }; c.onmouseleave = () => { c.style.background="" } }
+        c.onclick = e2 => { e2.stopPropagation(); sel=iso; lbl.textContent=fmt(iso); lbl.style.color="var(--text-normal)"; if(onChange)onChange(iso); cal.remove(); cal=null; if(hdlr) document.removeEventListener("click",hdlr,true) }
+      }
+    }
+    render()
+    let hdlr; hdlr = e2 => { if(cal && !cal.contains(e2.target) && e2.target!==btn){cal.remove();cal=null;document.removeEventListener("click",hdlr,true)} }
+    setTimeout(() => document.addEventListener("click", hdlr, true), 10)
+  }
+  return { getValue: () => sel }
+}
+
 // Applique en mémoire un ajout/modification/suppression manuelle (persisté par ailleurs sur disque)
 const applyLocalUpsert = workout => {
   const idx = ALL.findIndex(w => w.id === workout.id)
@@ -250,7 +307,7 @@ const openWorkoutModal = (existing) => {
   const fTitre = mkField(row2, 'Titre')
   const inpTitre = fTitre.createEl('input',{attr:{type:'text',value:state.title,placeholder:'ex. Jambes, Course à pied…',style:INPUT_STYLE}})
   const fDate = mkField(row2, 'Date')
-  const inpDate = fDate.createEl('input',{attr:{type:'date',value:state.date,style:INPUT_STYLE}})
+  const datePicker = mkDatePicker(fDate, state.date, v => { state.date = v }, 'Choisir une date')
 
   const fDur = mkField(box, 'Durée (minutes, optionnel)')
   fDur.style.marginBottom = '12px'
@@ -309,7 +366,7 @@ const openWorkoutModal = (existing) => {
   saveBtn.style.cssText=`padding:8px 16px;border-radius:8px;border:none;background:${SPORT_C};color:#fff;cursor:pointer;font-size:0.85em;font-weight:700;`
   saveBtn.onclick = async () => {
     const title = inpTitre.value.trim() || 'Séance'
-    const date = inpDate.value || today
+    const date = datePicker.getValue() || today
     const dur = parseInt(inpDur.value) || 0
 
     const exercises = state.exercises
@@ -659,7 +716,7 @@ const _drawLineChart = (cnt, points, {yFmt, color}) => {
   miniStatsRow(cnt, [
     ['Record (PR)', yFmt(pr), ACCENT],
     [n>1?'Valeur initiale':'—', yFmt(startV)],
-    ['Progression', (delta>=0?'+':'-')+yFmt(Math.abs(delta)), delta>=0?SPORT_C:'#d20f39'],
+    ['Progression', (delta>=0?'+':'-')+yFmt(Math.abs(delta)), delta>=0?GAIN_C:'#d20f39'],
     ['Séances', n],
   ])
 }
