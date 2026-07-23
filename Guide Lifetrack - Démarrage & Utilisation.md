@@ -363,7 +363,7 @@ Exemple : tu viens de faire 3 mois de séances sur Hevy et veux les voir dans Li
 3. Lance le script d'import :
    - **Windows** : double-clique sur `_Système/Scripts/Hevy/Import Hevy.bat`
    - **Linux/macOS** : double-clique sur `_Système/Scripts/Hevy/Import Hevy.desktop` (ou `lancer_hevy.sh`)
-4. Clique sur **📂 Choisir le fichier CSV** et sélectionne ton export — l'import se lance automatiquement
+4. Clique sur **📂 Choisir le fichier CSV** et sélectionne ton export - l'import se lance automatiquement
 
 Tes séances sont fusionnées dans `2 - Domaines/Sport/Data/hevy_<année>.json`. Réimporter un export qui se chevauche avec des données déjà présentes ne crée pas de doublons.
 

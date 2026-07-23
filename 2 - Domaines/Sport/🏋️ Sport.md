@@ -410,7 +410,7 @@ const confirmDeleteWorkout = async workout => {
   const box = overlay.createDiv()
   box.style.cssText = 'background:var(--background-primary);border-radius:14px;padding:20px 22px;width:360px;max-width:100%;box-shadow:0 12px 50px rgba(0,0,0,0.4);'
   box.createEl('div',{attr:{style:'font-weight:700;color:var(--text-normal);margin-bottom:6px;'}}).textContent='Supprimer cette séance ?'
-  box.createEl('div',{attr:{style:'font-size:0.85em;color:var(--text-muted);margin-bottom:16px;'}}).textContent = `${workout.title || 'Séance'} — ${fmtDateFr(workout.date)}`
+  box.createEl('div',{attr:{style:'font-size:0.85em;color:var(--text-muted);margin-bottom:16px;'}}).textContent = `${workout.title || 'Séance'} - ${fmtDateFr(workout.date)}`
   const actions = box.createDiv(); actions.style.cssText='display:flex;justify-content:flex-end;gap:8px;'
   const cancelBtn = actions.createEl('button')
   cancelBtn.textContent='Annuler'
@@ -543,7 +543,7 @@ const renderApercu = cnt => {
       const cell = col.createDiv()
       cell.style.cssText = ['flex:1;border-radius:3px', `background:${outYear?'transparent':colorFor(v)}`,
         !outYear?'border:1px solid rgba(0,0,0,0.05)':'', isToday?'outline:2px solid '+ACCENT+';outline-offset:1px;':''].filter(Boolean).join(';')
-      if (!outYear) cell.title = v ? `${fmtDateFr(key)} — ${fmtVol(v)} soulevés` : `${fmtDateFr(key)} — repos`
+      if (!outYear) cell.title = v ? `${fmtDateFr(key)} - ${fmtVol(v)} soulevés` : `${fmtDateFr(key)} - repos`
     }
   }
   const legend = hmBlock.createDiv()
@@ -654,8 +654,8 @@ const _drawLineChart = (cnt, points, {yFmt, color}) => {
     box.style.cssText = 'text-align:center;padding:26px 16px;background:var(--background-primary);border-radius:8px;margin-bottom:14px;'
     box.createEl('div',{attr:{style:`font-size:1.7em;font-weight:800;color:${color};margin-bottom:4px;`}}).textContent = yFmt(vals[0])
     box.createEl('div',{attr:{style:'font-size:0.8em;color:var(--text-muted);'}}).textContent =
-      n < 2 ? 'Une seule séance enregistrée — reviens après ta prochaine séance pour voir ta progression.'
-            : 'Même valeur à chaque séance pour l\'instant — pas encore de progression à afficher.'
+      n < 2 ? 'Une seule séance enregistrée - reviens après ta prochaine séance pour voir ta progression.'
+            : 'Même valeur à chaque séance pour l\'instant - pas encore de progression à afficher.'
     miniStatsRow(cnt, [['Record (PR)', yFmt(pr), ACCENT], ['Séances', n]])
     return
   }
@@ -715,7 +715,7 @@ const _drawLineChart = (cnt, points, {yFmt, color}) => {
 
   miniStatsRow(cnt, [
     ['Record (PR)', yFmt(pr), ACCENT],
-    [n>1?'Valeur initiale':'—', yFmt(startV)],
+    [n>1?'Valeur initiale':'-', yFmt(startV)],
     ['Progression', (delta>=0?'+':'-')+yFmt(Math.abs(delta)), delta>=0?GAIN_C:'#d20f39'],
     ['Séances', n],
   ])

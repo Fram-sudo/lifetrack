@@ -417,7 +417,7 @@ Le dashboard `2 - Domaines/Sport/🏋️ Sport.md` affiche tes séances de muscu
 2. Lance le script d'import :
    - **Windows** : double-clique sur `_Système/Scripts/Hevy/Import Hevy.bat`
    - **Linux/Mac** : double-clique sur `_Système/Scripts/Hevy/Import Hevy.desktop`, ou `lancer_hevy.sh`
-3. Choisis le fichier CSV exporté — l'import se lance automatiquement dès la sélection
+3. Choisis le fichier CSV exporté - l'import se lance automatiquement dès la sélection
 
 Les séances sont fusionnées dans `2 - Domaines/Sport/Data/hevy_<année>.json` (un fichier par année). Réimporter le même export plusieurs fois ne crée pas de doublons.
 

@@ -76,7 +76,7 @@ if (_src && _src.trim()) {
       épisodes = _med.episodes ? String(_med.episodes) : ""
       synopsis = await _cleanTranslate(_med.description || "")
 
-      // ── Relations (prequels/sequels — saisons principales uniquement) ──
+      // ── Relations (prequels/sequels - saisons principales uniquement) ──
       const _MAIN_FMT = ["TV","TV_SHORT","ONA"]
       const _seqs=(_med.relations?.edges||[]).filter(e=>e.relationType==="SEQUEL"&&e.node.type==="ANIME"&&_MAIN_FMT.includes(e.node.format)).sort((a,b)=>(a.node.seasonYear||0)-(b.node.seasonYear||0))
       const _pres=(_med.relations?.edges||[]).filter(e=>e.relationType==="PREQUEL"&&e.node.type==="ANIME"&&_MAIN_FMT.includes(e.node.format)).sort((a,b)=>(a.node.seasonYear||0)-(b.node.seasonYear||0))

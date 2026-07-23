@@ -1,6 +1,6 @@
 /* ================================================
-   Second Cerveau — Thème Catppuccin Latte
-   Mode CLAIR forcé — doux pour les yeux
+   Second Cerveau - Thème Catppuccin Latte
+   Mode CLAIR forcé - doux pour les yeux
    ================================================ */
 
 /* ---- PALETTE ---- */
@@ -82,7 +82,7 @@
 }
 
 /* ================================================
-   OVERRIDE DARK MODE — fond clair forcé
+   OVERRIDE DARK MODE - fond clair forcé
    (quand le système est en mode sombre)
    ================================================ */
 .theme-dark body,
@@ -269,7 +269,7 @@ blockquote { border-left: 3px solid #8839ef; color: #5c5f77; background: rgba(13
 .status-bar { background-color: #e6e9ef; border-top: 1px solid #ccd0da; color: #6c6f85; font-size: 0.8em; }
 
 /* ================================================
-   PROPRIÉTÉS — masquées partout en lecture
+   PROPRIÉTÉS - masquées partout en lecture
    (évite l'espace vide en haut des notes)
    ================================================ */
 .metadata-container,
@@ -282,7 +282,7 @@ blockquote { border-left: 3px solid #8839ef; color: #5c5f77; background: rgba(13
 }
 
 /* ================================================
-   DASHBOARD — pleine largeur, sans marges latérales
+   DASHBOARD - pleine largeur, sans marges latérales
    ================================================ */
 
 /* Supprime la limite de largeur readable-line-length */
@@ -316,7 +316,7 @@ blockquote { border-left: 3px solid #8839ef; color: #5c5f77; background: rgba(13
 .dashboard .markdown-rendered h1:first-of-type { margin-top: 0.3em !important; }
 
 /* ================================================
-   GALERIE MÉDIAS — pleine largeur, sans marges
+   GALERIE MÉDIAS - pleine largeur, sans marges
    ================================================ */
 .media-page .markdown-preview-sizer,
 .media-page .markdown-preview-view .markdown-preview-sizer,
@@ -332,7 +332,7 @@ blockquote { border-left: 3px solid #8839ef; color: #5c5f77; background: rgba(13
 .media-page .inline-title { display: none !important; }
 
 /* ================================================
-   TOUTES LES NOTES — pleine largeur globale
+   TOUTES LES NOTES - pleine largeur globale
    S'applique à toutes les notes sans cssclasses
    ================================================ */
 .markdown-preview-sizer,

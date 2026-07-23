@@ -1462,7 +1462,7 @@ const _renderDonut = () => {
   const txP = filterTx(ALL_TX).filter(t => t.type === "dépense" && !isVirement(t))
   if (!txP.length) return
 
-  // Palette — couleurs stables par catégorie (ordre du frontmatter en priorité, puis hash pour les nouvelles)
+  // Palette - couleurs stables par catégorie (ordre du frontmatter en priorité, puis hash pour les nouvelles)
   const PAL = ["#1e66f5","#8839ef","#d20f39","#fe640b","#df8e1d","#40a02b","#04a5e5","#ea76cb","#179299","#dd7878","#7287fd","#e64553"]
   const knownOrder = [...CATS_DEPENSE, "📦 Commandes"]
   const catColorMap = {}

@@ -1,14 +1,14 @@
 /* ================================================
-   Second Cerveau — Callouts Personnalisés
+   Second Cerveau - Callouts Personnalisés
    Callouts métier pour les usages de Guillaume :
    Procédure, Tech, IA, Commande, Média, Alerte
    ================================================ */
 
 /* ================================================
-   CALLOUTS MÉTIER — usage quotidien
+   CALLOUTS MÉTIER - usage quotidien
    ================================================ */
 
-/* [!procedure] — Pour les procédures et how-to tech */
+/* [!procedure] - Pour les procédures et how-to tech */
 .callout[data-callout="procedure"] {
   --callout-color: 74, 143, 168;
   --callout-icon: lucide-terminal;
@@ -21,7 +21,7 @@
   color: rgb(30, 90, 112) !important;
 }
 
-/* [!cmd] — Pour les commandes système / terminal */
+/* [!cmd] - Pour les commandes système / terminal */
 .callout[data-callout="cmd"] {
   --callout-color: 78, 138, 90;
   --callout-icon: lucide-terminal-square;
@@ -34,7 +34,7 @@
   font-family: 'JetBrains Mono', 'Consolas', monospace;
 }
 
-/* [!ia] — Pour les discussions IA/Claude archivées */
+/* [!ia] - Pour les discussions IA/Claude archivées */
 .callout[data-callout="ia"] {
   --callout-color: 136, 120, 195;
   --callout-icon: lucide-bot;
@@ -47,7 +47,7 @@
   letter-spacing: 0.08em;
 }
 
-/* [!media] — Pour les fiches médias */
+/* [!media] - Pour les fiches médias */
 .callout[data-callout="media"] {
   --callout-color: 196, 120, 144;
   --callout-icon: lucide-clapperboard;
@@ -55,7 +55,7 @@
   border-left: 3px solid #C47890;
 }
 
-/* [!commande] — Pour les commandes/achats en attente */
+/* [!commande] - Pour les commandes/achats en attente */
 .callout[data-callout="commande"] {
   --callout-color: 192, 120, 80;
   --callout-icon: lucide-package;
@@ -63,7 +63,7 @@
   border-left: 3px solid #C07850;
 }
 
-/* [!suivi] — Pour les suivis de progression */
+/* [!suivi] - Pour les suivis de progression */
 .callout[data-callout="suivi"] {
   --callout-color: 78, 138, 90;
   --callout-icon: lucide-trending-up;
@@ -71,7 +71,7 @@
   border-left: 3px solid #4E8A5A;
 }
 
-/* [!alerte] — Attention importante */
+/* [!alerte] - Attention importante */
 .callout[data-callout="alerte"] {
   --callout-color: 184, 64, 64;
   --callout-icon: lucide-alert-triangle;
@@ -79,7 +79,7 @@
   border-left: 3px solid #B84040;
 }
 
-/* [!ref] — Référence externe, lien important */
+/* [!ref] - Référence externe, lien important */
 .callout[data-callout="ref"] {
   --callout-color: 91, 127, 166;
   --callout-icon: lucide-external-link;
@@ -87,7 +87,7 @@
   border-left: 3px solid #5B7FA6;
 }
 
-/* [!résumé] — Résumé / synthèse */
+/* [!résumé] - Résumé / synthèse */
 .callout[data-callout="résumé"],
 .callout[data-callout="resume"] {
   --callout-color: 91, 127, 166;
@@ -96,7 +96,7 @@
   border-left: 3px solid #5B7FA6;
 }
 
-/* [!formation] — Contenu CESI / formation */
+/* [!formation] - Contenu CESI / formation */
 .callout[data-callout="formation"] {
   --callout-color: 72, 155, 172;
   --callout-icon: lucide-graduation-cap;
@@ -127,7 +127,7 @@
 
 /* ================================================
    STYLE NAV (barre de navigation rapide)
-   Déjà défini dans theme.css — complément couleur
+   Déjà défini dans theme.css - complément couleur
    ================================================ */
 
 /* nav actif : lien surligné bleu */
@@ -141,7 +141,7 @@
    CALLOUT STATS (pour les MOC et dashboards)
    ================================================ */
 
-/* [!stats] — Widget statistiques */
+/* [!stats] - Widget statistiques */
 .callout[data-callout="stats"] {
   --callout-color: 91, 127, 166;
   --callout-icon: lucide-bar-chart-2;

@@ -1,12 +1,12 @@
 /* ================================================
-   Second Cerveau — Typographie
+   Second Cerveau - Typographie
    Polices : Inter (corps + titres) · JetBrains Mono (code)
    ================================================ */
 
 /* ---- IMPORT GOOGLE FONTS ---- */
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
 
-/* ---- CORPS DE TEXTE — Inter ---- */
+/* ---- CORPS DE TEXTE - Inter ---- */
 .theme-light body,
 .theme-light .markdown-preview-view,
 .theme-light .markdown-source-view,
@@ -18,7 +18,7 @@
   -webkit-font-smoothing: antialiased;
 }
 
-/* ---- TITRES — Inter ---- */
+/* ---- TITRES - Inter ---- */
 .theme-light .markdown-rendered h1,
 .theme-light .markdown-rendered h2,
 .theme-light .markdown-rendered h3,
@@ -37,7 +37,7 @@
   letter-spacing: -0.02em;
 }
 
-/* ---- CODE — JetBrains Mono ---- */
+/* ---- CODE - JetBrains Mono ---- */
 .theme-light code,
 .theme-light pre,
 .theme-light .cm-inline-code {
@@ -46,7 +46,7 @@
   font-variant-ligatures: contextual;
 }
 
-/* ---- INTERFACE — Inter ---- */
+/* ---- INTERFACE - Inter ---- */
 .theme-light .nav-file-title,
 .theme-light .nav-folder-title-content,
 .theme-light .workspace-tab-header-inner-title,
@@ -76,7 +76,7 @@
   margin: 0.2em 0;
 }
 
-/* ---- LISIBILITÉ — largeur maximale confortable ---- */
+/* ---- LISIBILITÉ - largeur maximale confortable ---- */
 /* Limite la largeur du texte pour éviter les lignes trop longues */
 .theme-light .markdown-preview-view .markdown-preview-sizer {
   max-width: 760px;

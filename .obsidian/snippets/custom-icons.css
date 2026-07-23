@@ -1,5 +1,5 @@
 /* ═══════════════════════════════════════════════════
-   CUSTOM ICONS — Lifetrack
+   CUSTOM ICONS - Lifetrack
    ═══════════════════════════════════════════════════ */
 .nav-folder-title[data-path="0 - Inbox"] .nav-folder-title-content::before  { content:"📥 "; }
 .nav-folder-title[data-path="2 - Domaines"] .nav-folder-title-content::before { content:"🌐 "; }
